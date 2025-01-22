@@ -15,16 +15,16 @@ interface FilterState {
   sortOrder: 'asc' | 'desc';
 }
 
-const Products = () => {
+const Products = ({ initialProducts, initialCategories }: { initialProducts: Product[], initialCategories: Category[] }) => {
   const router = useRouter();
   const { search, category, minPrice, maxPrice, sortBy, sortOrder } = router.query;
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
 
   const initialFilters: FilterState = {
     category: category ? Number(category) : null,
@@ -188,6 +188,14 @@ const Products = () => {
     const sortedFiltered = sortProducts(filtered, filters.sortBy, filters.sortOrder);
     setFilteredProducts(sortedFiltered);
   }, [products, search, filters, sortProducts]);
+
+  useEffect(() => {
+    // Check authentication on client side
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -354,6 +362,36 @@ const Products = () => {
       </div>
     </div>
   );
+};
+
+export const getServerSideProps = async () => {
+  try {
+    const [productsRes, categoriesRes] = await Promise.all([
+      fetch('https://api.escuelajs.co/api/v1/products'),
+      fetch('https://api.escuelajs.co/api/v1/categories')
+    ]);
+    
+    const [products, categories] = await Promise.all([
+      productsRes.json(),
+      categoriesRes.json()
+    ]);
+
+    return {
+      props: {
+        initialProducts: products,
+        initialCategories: categories,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return {
+      props: {
+        initialProducts: [],
+        initialCategories: [],
+        error: 'Failed to fetch data'
+      },
+    };
+  }
 };
 
 export default Products;

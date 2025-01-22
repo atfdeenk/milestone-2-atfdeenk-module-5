@@ -95,7 +95,6 @@ const ProductDetail: NextPage = () => {
       return;
     }
 
-    addToCart();
     setShowCheckoutConfirm(true);
   };
 
@@ -128,18 +127,15 @@ const ProductDetail: NextPage = () => {
         localStorage.setItem(orderHistoryKey, JSON.stringify(existingOrders));
       }
 
-      // Navigate to receipt page without clearing cart
+      // Navigate to receipt page
       router.push({
         pathname: '/receipt',
         query: { receiptData: JSON.stringify(receiptData) }
       });
     } catch (err) {
       console.error('Error processing order:', err);
-      const message = document.createElement('div');
-      message.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg';
-      message.textContent = 'Error processing order';
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      setError('Error processing order');
+      setTimeout(() => setError(''), 3000);
     } finally {
       setIsBuyingNow(false);
       setShowCheckoutConfirm(false);

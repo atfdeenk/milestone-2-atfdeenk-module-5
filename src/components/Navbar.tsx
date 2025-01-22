@@ -426,13 +426,13 @@ const Navbar = () => {
                     href="/register"
                     className="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200 text-sm font-medium"
                   >
-                    Register
+                    Sign up
                   </Link>
                   <Link
                     href="/login"
                     className="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200 text-sm font-medium"
                   >
-                    Login
+                    Sign in
                   </Link>
                 </div>
               )}
