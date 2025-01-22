@@ -63,7 +63,7 @@ export default function Home() {
                   Explore our curated collection of trendy fashion items. From casual wear to elegant pieces, 
                   find everything you need to express your unique style.
                 </p>
-                <div className="mt-8 sm:mt-12 space-y-4 sm:space-y-0 sm:flex sm:gap-4">
+                <div className="mt-8 sm:mt-12 space-y-4 sm:space-y-0 sm:flex sm:gap-4 max-lg:justify-center">
                   <Link
                     href="/products"
                     className="group relative inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-lg font-medium rounded-xl overflow-hidden transition-all duration-300 hover:from-blue-700 hover:to-blue-800 hover:scale-105 shadow-lg hover:shadow-xl"
