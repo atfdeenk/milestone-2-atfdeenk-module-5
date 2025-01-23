@@ -1,18 +1,24 @@
-import type { NextPage } from 'next';
+import type { GetServerSideProps, NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '../../types';
 
-const ProductDetail: NextPage = () => {
+interface ProductDetailProps {
+  initialProduct: Product | null;
+  relatedProducts?: Product[];
+  error?: string | null;
+}
+
+const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedProducts = [], error: serverError }) => {
   const router = useRouter();
   const { id } = router.query;
   
-  const [product, setProduct] = useState<Product | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [product, setProduct] = useState<Product | null>(initialProduct);
+  const [selectedImage, setSelectedImage] = useState<string | null>(initialProduct?.images[0] || null);
+  const [isLoading, setIsLoading] = useState(!initialProduct);
+  const [error, setError] = useState(serverError || '');
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
@@ -27,7 +33,7 @@ const ProductDetail: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!router.isReady) return;
+    if (!router.isReady || initialProduct) return;
 
     const fetchProduct = async () => {
       try {
@@ -50,7 +56,7 @@ const ProductDetail: NextPage = () => {
     };
 
     fetchProduct();
-  }, [id, router.isReady]);
+  }, [id, router.isReady, initialProduct]);
 
   const addToCart = () => {
     setIsAddingToCart(true);
@@ -464,6 +470,47 @@ const ProductDetail: NextPage = () => {
       )}
     </div>
   );
+};
+
+export const getServerSideProps: GetServerSideProps<ProductDetailProps> = async ({ params }) => {
+  if (!params?.id) {
+    return {
+      notFound: true
+    };
+  }
+
+  try {
+    const response = await fetch(`https://api.escuelajs.co/api/v1/products/${params.id}`);
+    
+    if (!response.ok) {
+      throw new Error('Product not found');
+    }
+    
+    const product = await response.json();
+
+    // Fetch related products from the same category
+    const relatedResponse = await fetch(
+      `https://api.escuelajs.co/api/v1/products?categoryId=${product.category.id}&offset=0&limit=4`
+    );
+    const relatedProducts = await relatedResponse.json();
+
+    return {
+      props: {
+        initialProduct: product,
+        relatedProducts: relatedProducts.filter((p: Product) => p.id !== Number(params.id)),
+        error: null
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return {
+      props: {
+        initialProduct: null,
+        relatedProducts: [],
+        error: 'Failed to load product details. Please try again.'
+      }
+    };
+  }
 };
 
 export default ProductDetail;

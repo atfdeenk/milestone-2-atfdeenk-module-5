@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Product, Category } from '../../types';
 import ProductFilter from '../../components/ProductFilter';
+import { GetServerSideProps } from 'next';
 
 interface FilterState {
   category: number | null;
@@ -15,7 +16,16 @@ interface FilterState {
   sortOrder: 'asc' | 'desc';
 }
 
-const Products = ({ initialProducts, initialCategories }: { initialProducts: Product[], initialCategories: Category[] }) => {
+interface QueryParams {
+  search?: string;
+  category?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+const Products = ({ initialProducts, initialCategories, appliedFilters }: { initialProducts: Product[], initialCategories: Category[], appliedFilters?: Partial<FilterState> }) => {
   const router = useRouter();
   const { search, category, minPrice, maxPrice, sortBy, sortOrder } = router.query;
 
@@ -26,7 +36,18 @@ const Products = ({ initialProducts, initialCategories }: { initialProducts: Pro
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
 
+  const defaultFilters: FilterState = {
+    category: null,
+    priceRange: {
+      min: 0,
+      max: 0,
+    },
+    sortBy: '',
+    sortOrder: 'desc',
+  };
+
   const initialFilters: FilterState = {
+    ...defaultFilters,
     category: category ? Number(category) : null,
     priceRange: {
       min: minPrice ? Number(minPrice) : 0,
@@ -36,7 +57,15 @@ const Products = ({ initialProducts, initialCategories }: { initialProducts: Pro
     sortOrder: (sortOrder as 'asc' | 'desc') || 'desc',
   };
 
-  const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const [filters, setFilters] = useState<FilterState>({
+    ...defaultFilters,
+    ...initialFilters,
+    ...appliedFilters,
+    priceRange: {
+      min: appliedFilters?.priceRange?.min ?? initialFilters.priceRange.min,
+      max: appliedFilters?.priceRange?.max ?? initialFilters.priceRange.max,
+    }
+  });
 
   const isValidImageUrl = (url: string) => {
     try {
@@ -356,22 +385,76 @@ const Products = ({ initialProducts, initialCategories }: { initialProducts: Pro
   );
 };
 
-export const getServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async ({ query }) => {
   try {
+    const { search, category, minPrice, maxPrice, sortBy, sortOrder } = query as QueryParams;
+    
+    // Build the API URL with query parameters
+    let productsUrl = 'https://api.escuelajs.co/api/v1/products';
+    if (search) {
+      productsUrl += `?title=${search}`;
+    }
+    if (category) {
+      productsUrl += `${search ? '&' : '?'}categoryId=${category}`;
+    }
+    
     const [productsRes, categoriesRes] = await Promise.all([
-      fetch('https://api.escuelajs.co/api/v1/products'),
+      fetch(productsUrl),
       fetch('https://api.escuelajs.co/api/v1/categories')
     ]);
     
+    if (!productsRes.ok || !categoriesRes.ok) {
+      throw new Error('Failed to fetch data');
+    }
+
     const [products, categories] = await Promise.all([
       productsRes.json(),
       categoriesRes.json()
     ]);
 
+    // Server-side filtering for price range
+    let filteredProducts = products as Product[];
+    if (minPrice || maxPrice) {
+      filteredProducts = filteredProducts.filter((product: Product) => {
+        const price = Number(product.price);
+        const min = minPrice ? Number(minPrice) : 0;
+        const max = maxPrice ? Number(maxPrice) : Infinity;
+        return price >= min && price <= max;
+      });
+    }
+
+    // Server-side sorting
+    if (sortBy) {
+      filteredProducts.sort((a: Product, b: Product) => {
+        const order = sortOrder === 'desc' ? -1 : 1;
+        switch (sortBy) {
+          case 'price':
+            return (a.price - b.price) * order;
+          case 'title':
+            return a.title.localeCompare(b.title) * order;
+          case 'createdAt':
+            return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * order;
+          default:
+            return 0;
+        }
+      });
+    }
+
+    const appliedFilters: FilterState = {
+      category: category ? Number(category) : null,
+      priceRange: {
+        min: minPrice ? Number(minPrice) : 0,
+        max: maxPrice ? Number(maxPrice) : 0,
+      },
+      sortBy: sortBy || '',
+      sortOrder: (sortOrder as 'asc' | 'desc') || 'desc'
+    };
+
     return {
       props: {
-        initialProducts: products,
+        initialProducts: filteredProducts,
         initialCategories: categories,
+        appliedFilters
       },
     };
   } catch (error) {
@@ -380,6 +463,12 @@ export const getServerSideProps = async () => {
       props: {
         initialProducts: [],
         initialCategories: [],
+        appliedFilters: {
+          category: null,
+          priceRange: { min: 0, max: 0 },
+          sortBy: '',
+          sortOrder: 'desc'
+        },
         error: 'Failed to fetch data'
       },
     };
