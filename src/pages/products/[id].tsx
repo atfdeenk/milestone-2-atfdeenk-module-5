@@ -16,7 +16,8 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   const { id } = router.query;
   
   const [product, setProduct] = useState<Product | null>(initialProduct);
-  const [selectedImage, setSelectedImage] = useState<string | null>(initialProduct?.images[0] || null);
+  const [selectedImage, setSelectedImage] = useState<string>('https://i.imgur.com/QkIa5tT.jpeg');
+  const [imageError, setImageError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(!initialProduct);
   const [error, setError] = useState(serverError || '');
   const [quantity, setQuantity] = useState(1);
@@ -32,6 +33,83 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
     }
   }, []);
 
+  const parseImageUrl = (rawUrl: string): string => {
+    console.log('Parsing image URL:', rawUrl);
+    try {
+      // Try to parse as JSON first
+      let parsed = rawUrl;
+      while (typeof parsed === 'string' && (parsed.startsWith('[') || parsed.startsWith('"'))) {
+        console.log('Attempting to parse:', parsed);
+        parsed = JSON.parse(parsed);
+      }
+      
+      // If we got an array, take the first item
+      if (Array.isArray(parsed)) {
+        parsed = parsed[0];
+      }
+      
+      // Clean up the URL
+      const cleanUrl = String(parsed).replace(/[\[\]"]/g, '').trim();
+      console.log('Cleaned URL:', cleanUrl);
+      
+      // Validate URL
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        throw new Error('Invalid URL protocol');
+      }
+      
+      // Check for placeimg.com and replace with imgur fallback
+      if (cleanUrl.includes('placeimg.com')) {
+        console.log('Found placeimg.com URL, using fallback');
+        return 'https://i.imgur.com/QkIa5tT.jpeg';
+      }
+
+      // Validate the hostname is in our allowed list
+      const allowedHosts = [
+        'i.imgur.com',
+        'api.escuelajs.co',
+        'ui-avatars.com',
+        'images.unsplash.com',
+        'api.lorem.space',
+        'encrypted-tbn0.gstatic.com'
+      ];
+      
+      const url = new URL(cleanUrl);
+      if (!allowedHosts.includes(url.hostname)) {
+        console.log('URL hostname not in allowed list:', url.hostname);
+        return 'https://i.imgur.com/QkIa5tT.jpeg';
+      }
+      
+      return cleanUrl;
+    } catch (err) {
+      console.error('Error parsing image URL:', err);
+      return 'https://i.imgur.com/QkIa5tT.jpeg';
+    }
+  };
+
+  useEffect(() => {
+    if (initialProduct?.images) {
+      try {
+        let imageUrl: string;
+        if (Array.isArray(initialProduct.images) && initialProduct.images.length > 0) {
+          console.log('Initial product images:', initialProduct.images);
+          imageUrl = parseImageUrl(initialProduct.images[0]);
+        } else if (typeof initialProduct.images === 'string') {
+          console.log('Initial product images string:', initialProduct.images);
+          imageUrl = parseImageUrl(initialProduct.images);
+        } else {
+          throw new Error('Invalid image format');
+        }
+        
+        setSelectedImage(imageUrl);
+        setImageError(false);
+      } catch (err) {
+        console.error('Error processing initial product image:', err);
+        setSelectedImage('https://i.imgur.com/QkIa5tT.jpeg');
+        setImageError(false);
+      }
+    }
+  }, [initialProduct]);
+
   useEffect(() => {
     if (!router.isReady || initialProduct) return;
 
@@ -45,8 +123,20 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
         }
         
         const data = await response.json();
+        console.log('Fetched product data:', data);
         setProduct(data);
-        setSelectedImage(data.images[0]);
+        
+        if (Array.isArray(data.images) && data.images.length > 0) {
+          try {
+            console.log('Processing fetched product images:', data.images);
+            const imageUrl = parseImageUrl(data.images[0]);
+            setSelectedImage(imageUrl);
+            setImageError(false);
+          } catch (err) {
+            console.error('Error processing fetched product image:', err);
+            setSelectedImage('https://i.imgur.com/QkIa5tT.jpeg');
+          }
+        }
       } catch (err) {
         console.error('Error fetching product:', err);
         setError('Failed to load product details. Please try again.');
@@ -240,15 +330,26 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
         <div className="flex flex-col lg:flex-row items-start justify-between gap-8">
           {/* Image Gallery */}
           <div className="w-full lg:w-1/2 lg:sticky lg:top-4">
-            <div className="relative aspect-square w-full">
-              <Image
-                src={selectedImage || product.images[0]}
-                alt={product.title}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
-                className="object-cover"
-                priority
-              />
+            <div className="relative aspect-square w-full bg-gray-100">
+              {selectedImage && !imageError ? (
+                <Image
+                  src={selectedImage}
+                  alt={product?.title || 'Product Image'}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+                  className="object-cover"
+                  priority
+                  onError={() => {
+                    console.error('Image failed to load:', selectedImage);
+                    setImageError(true);
+                    setSelectedImage('https://i.imgur.com/QkIa5tT.jpeg');
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                  <span className="text-gray-500">Image not available</span>
+                </div>
+              )}
             </div>
             {product.images.length > 1 && (
               <div className="mt-4 grid grid-cols-4 gap-4">
@@ -340,7 +441,11 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
                     className="w-full px-6 py-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-600 group text-lg"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                      <path
+                        fillRule="evenodd"
+                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     Login to Purchase
                   </Link>
@@ -444,7 +549,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
                 ) : (
                   <>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2.5a1 1 0 001-1V4a1 1 0 011-1h2a1 1 0 011 1v1a1 1 0 001 1H9a1 1 0 001-1V4a1 1 0 011-1h2a1 1 0 011 1v3a1 1 0 001-1h2.5a1 1 0 001 1v2M7 10h5a1 1 0 001-1V7a1 1 0 00-1-1H7a1 1 0 00-1 1v1a3 3 0 01-3 3z" clipRule="evenodd" />
                     </svg>
                     <span>Confirm Purchase</span>
                   </>

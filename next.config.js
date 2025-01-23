@@ -2,31 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com'
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.imgur.com'
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.escuelajs.co'
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.lorem.space'
-      },
-      {
-        protocol: 'https',
-        hostname: 'ui-avatars.com'
-      }
-    ]
-  }
-};
+    domains: [
+      'i.imgur.com',
+      'api.escuelajs.co',
+      'ui-avatars.com',
+      'images.unsplash.com',
+      'api.lorem.space',
+      'encrypted-tbn0.gstatic.com'
+    ],
+  },
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
