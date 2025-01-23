@@ -6,9 +6,8 @@ export function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
                     request.nextUrl.pathname.startsWith('/register');
   
-  // Check if the requested page is a protected route
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/products') ||
-                          request.nextUrl.pathname.startsWith('/cart') ||
+  // Check if the requested page is a protected route (only cart and receipt)
+  const isProtectedRoute = request.nextUrl.pathname.startsWith('/cart') ||
                           request.nextUrl.pathname.startsWith('/receipt');
 
   // For client-side auth check, we'll let the pages handle the auth check
@@ -18,7 +17,6 @@ export function middleware(request: NextRequest) {
 // Configure which routes should be handled by the middleware
 export const config = {
   matcher: [
-    '/products/:path*',
     '/cart',
     '/receipt',
     '/login',
