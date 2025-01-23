@@ -75,7 +75,7 @@ export default function Home() {
                       </svg>
                     </span>
                   </Link>
-                  <Link
+                  {/* <Link
                     href="/register"
                     className="group relative inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-lg font-medium rounded-xl overflow-hidden transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl"
                   >
@@ -85,7 +85,7 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
                     </span>
-                  </Link>
+                  </Link> */}
                 </div>
                 <div className="mt-8 flex items-center gap-6 text-gray-600 dark:text-gray-400 sm:justify-center lg:justify-start">
                   <div className="flex items-center gap-2">
