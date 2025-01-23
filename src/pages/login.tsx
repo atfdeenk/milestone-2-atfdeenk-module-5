@@ -13,14 +13,12 @@ const Login: NextPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!router.isReady) return;
-
     // Check if user is already logged in
     const token = localStorage.getItem('token');
     if (token) {
       router.push('/products');
     }
-  }, [router.isReady]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
