@@ -19,23 +19,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'picsum.photos'
-      },
-      {
-        protocol: 'https',
-        hostname: 'placeimg.com'
+        hostname: 'api.lorem.space'
       },
       {
         protocol: 'https',
         hostname: 'ui-avatars.com'
-      },
-      {
-        protocol: 'https',
-        hostname: 'avatars.dicebear.com'
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.lorem.space'
       }
     ]
   }
