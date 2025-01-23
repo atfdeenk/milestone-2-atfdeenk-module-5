@@ -189,14 +189,6 @@ const Products = ({ initialProducts, initialCategories }: { initialProducts: Pro
     setFilteredProducts(sortedFiltered);
   }, [products, search, filters, sortProducts]);
 
-  useEffect(() => {
-    // Check authentication on client side
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-    }
-  }, [router]);
-
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
     // Update URL params
