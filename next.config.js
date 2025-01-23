@@ -32,6 +32,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'avatars.dicebear.com'
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.lorem.space'
       }
     ]
   }
