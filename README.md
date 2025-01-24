@@ -1,40 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# ShopSmart - Next.js E-commerce Application
+
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://shopsmart-next.vercel.app/)
+
+ShopSmart is a modern e-commerce application built with Next.js, TypeScript, and Tailwind CSS. It provides a seamless shopping experience with features like product browsing, filtering, cart management, and more.
+
+## 📱 Preview
+
+### Home Page
+![ShopSmart Home Page](/public/assets/shopsmart-nextjs.png)
+
+### Home Page - User Logged In
+![ShopSmart Home Page - User Logged In](/public/assets/shopsmart-nextjs-login.png)
+
+## 🚀 Features
+
+- **Product Catalog**
+  - Browse products with detailed information
+  - View product categories
+  - Advanced filtering and sorting options
+  - Product search functionality
+
+- **Shopping Cart**
+  - Add/remove products
+  - Adjust quantities
+  - Persistent cart data
+
+- **User Interface**
+  - Responsive design for all devices
+  - Dark/Light mode support
+  - Loading states and notifications
+  - SEO optimized pages
+
+- **Performance**
+  - Server-side rendering for better performance
+  - Image optimization with Next.js Image
+  - Fast page navigation
+
+## Technology Stack
+
+- **Frontend Framework**: Next.js 15.1.6
+- **Programming Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: React Hooks
+- **Icons**: React Icons
+- **Testing**: Jest & React Testing Library
+- **API Mocking**: MSW (Mock Service Worker)
+
+## Project Structure
+
+```
+src/
+├── components/      # Reusable UI components
+├── pages/          # Next.js pages and API routes
+├── types/          # TypeScript type definitions
+└── utils/          # Utility functions and helpers
+```
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone the repository**
+   ```bash
+   git clone [https://github.com/atfdeenk/milestone-2-atfdeenk-module-5.git]
+   ```
 
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Run development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Build for production**
+   ```bash
+   npm run build
+   ```
+
+## Testing
+
+Run the test suite:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Watch mode for development:
+```bash
+npm run test:watch
+```
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+The application is deployed on Vercel and can be accessed at [https://shopsmart-next.vercel.app/](https://shopsmart-next.vercel.app/)
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Contributing
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+## Author
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+- atfdeenk - [https://github.com/atfdeenk](https://github.com/atfdeenk)
