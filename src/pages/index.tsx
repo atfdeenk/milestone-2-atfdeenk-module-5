@@ -68,7 +68,7 @@ export default function Home() {
         ]}
       />
       <div className={`${geistSans.variable} min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900`}>
-        {isLoading && <LoadingSpinner delay={300} message="Taking you to products..." />}
+        {isLoading && <LoadingSpinner delay={300} message="Loading products..." />}
         {/* Hero Section */}
         <div className="relative overflow-hidden px-6">
           {/* Background Pattern */}
