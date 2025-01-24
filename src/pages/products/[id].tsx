@@ -193,7 +193,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
           id: product.id,
           title: product.title,
           price: product.price,
-          image: selectedImage,
+          images: product.images,
           quantity: quantity
         });
       }
