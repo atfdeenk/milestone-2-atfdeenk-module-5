@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Product, Category } from '../../types';
 import ProductFilter from '../../components/ProductFilter';
 import { GetServerSideProps } from 'next';
+import { clearSearch } from '../../utils/search';
 
 interface FilterState {
   category: string | null;
@@ -150,15 +151,26 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
   }, [initialProducts, initialCategories]);
 
   useEffect(() => {
+    if (typeof search === 'string') {
+      setSearchValue(search);
+    } else {
+      setSearchValue('');
+    }
+  }, [search]);
+
+  useEffect(() => {
     if (!products) return;
 
     let filtered = [...products];
 
     // Apply search filter
-    const searchQuery = searchValue.toLowerCase().trim();
-    if (searchQuery) {
+    if (searchValue) {
       filtered = filtered.filter((product) => {
-        return product.title.toLowerCase().includes(searchQuery);
+        const searchTerms = searchValue.toLowerCase().split(' ');
+        return searchTerms.every(term =>
+          product.title.toLowerCase().includes(term) ||
+          product.description.toLowerCase().includes(term)
+        );
       });
     }
 
@@ -332,12 +344,7 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
                               ({filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'})
                             </span>
                             <button
-                              onClick={() => {
-                                setSearchValue('');
-                                const query = { ...router.query };
-                                delete query.search;
-                                router.push({ query }, undefined, { shallow: true });
-                              }}
+                              onClick={() => clearSearch(router, setSearchValue)}
                               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                             >
                               <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">

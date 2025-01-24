@@ -9,13 +9,21 @@ export interface Product {
   title: string;
   price: number;
   description: string;
+  category: {
+    id: number;
+    name: string;
+    image: string;
+  };
   images: string[];
-  category: Category;
   createdAt: string;
   updatedAt?: string;
 }
 
-export interface CartItem extends Product {
+export interface CartItem {
+  id: number;
+  title: string;
+  price: number;
+  image: string;
   quantity: number;
 }
 

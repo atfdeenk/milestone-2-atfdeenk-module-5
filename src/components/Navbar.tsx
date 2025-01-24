@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { FaShoppingCart, FaUser, FaBars, FaTimes } from 'react-icons/fa';
 import { BsSunFill, BsMoonStarsFill } from 'react-icons/bs';
 import { getAuthToken, removeAuthToken } from '../utils/auth';
+import { clearSearch } from '../utils/search';
 
 const Navbar = () => {
   const router = useRouter();
@@ -131,7 +132,10 @@ const Navbar = () => {
         .trim();
       
       if (formattedQuery) {
-        router.push(`/products?search=${encodeURIComponent(formattedQuery)}`);
+        router.push({
+          pathname: '/products',
+          query: { ...router.query, search: formattedQuery },
+        });
         
         if (isMobileMenuOpen) {
           setIsMobileMenuOpen(false);
@@ -145,13 +149,12 @@ const Navbar = () => {
     setSearchQuery(value.replace(/[^a-zA-Z0-9\s]/g, ''));
     
     if (!value.trim()) {
-      router.push('/products');
+      clearSearch(router, setSearchQuery);
     }
   };
 
   const handleClearSearch = () => {
-    setSearchQuery('');
-    router.push('/products');
+    clearSearch(router, setSearchQuery);
   };
 
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
