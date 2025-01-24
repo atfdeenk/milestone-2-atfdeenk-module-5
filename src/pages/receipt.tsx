@@ -20,7 +20,12 @@ export default function Receipt() {
   const router = useRouter();
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [router.asPath]);
 
   useEffect(() => {
     // First try to get from localStorage
@@ -60,19 +65,6 @@ export default function Receipt() {
     }
     setIsLoading(false);
   }, [router.query.receiptData]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!receiptData) {
-    router.push('/cart');
-    return null;
-  }
 
   const handlePrint = () => {
     if (!receiptData) return;
@@ -144,6 +136,25 @@ export default function Receipt() {
     printWindow.print();
   };
 
+  const handleContinueShopping = async () => {
+    setIsNavigating(true);
+    await router.push('/products');
+  };
+
+  if (isLoading || isNavigating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <p className="text-gray-600 dark:text-gray-300 mt-4">{isNavigating ? "Loading page..." : "Loading receipt..."}</p>
+      </div>
+    );
+  }
+
+  if (!receiptData) {
+    router.push('/cart');
+    return null;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
@@ -192,6 +203,10 @@ export default function Receipt() {
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
           <Link
             href="/products"
+            onClick={(e) => {
+              e.preventDefault();
+              handleContinueShopping();
+            }}
             className="flex-1 px-6 py-3 text-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
           >
             Continue Shopping

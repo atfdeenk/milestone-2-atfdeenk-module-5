@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '../../types';
 import Notification from '../../components/Notification';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface ProductDetailProps {
   initialProduct: Product | null;
@@ -20,6 +21,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   const [selectedImage, setSelectedImage] = useState<string>('https://i.imgur.com/QkIa5tT.jpeg');
   const [imageError, setImageError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(!initialProduct);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [error, setError] = useState(serverError || '');
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -317,15 +319,13 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div 
-          role="status"
-          className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"
-        />
-      </div>
-    );
+  const handleBackToProducts = () => {
+    setIsNavigating(true);
+    router.push('/products');
+  };
+
+  if (isLoading || isNavigating) {
+    return <LoadingSpinner delay={300} message={isNavigating ? "Loading page..." : "Loading product..."} />;
   }
 
   if (error) {
@@ -366,7 +366,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       <div className="max-w-6xl mx-auto">
         {/* Back button - only visible on mobile */}
         <button
-          onClick={() => router.push('/products')}
+          onClick={handleBackToProducts}
           className="md:hidden mb-6 flex items-center text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200"
         >
           <svg
@@ -553,12 +553,12 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
             </div>
 
             <div className="flex w-full">
-              <Link
-                href="/products"
+              <button
+                onClick={handleBackToProducts}
                 className="w-full text-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white px-6 py-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 text-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5"
               >
                 Continue Shopping
-              </Link>
+              </button>
             </div>
           </div>
         </div>

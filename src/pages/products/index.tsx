@@ -37,6 +37,7 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts || []);
   const [searchValue, setSearchValue] = useState(search as string || '');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const defaultFilters: FilterState = {
     category: null,
@@ -175,6 +176,10 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
   }, [search]);
 
   useEffect(() => {
+    setIsNavigating(false);
+  }, [router.asPath]);
+
+  useEffect(() => {
     if (!products) return;
 
     let filtered = [...products];
@@ -255,6 +260,16 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
     router.push({ query }, undefined, { shallow: true });
   };
 
+  const handleProductClick = async (productId: number) => {
+    setIsNavigating(true);
+    await router.push(`/products/${productId}`);
+  };
+
+  const handleCartClick = async () => {
+    setIsNavigating(true);
+    await router.push('/cart');
+  };
+
   if (!products || products.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -293,7 +308,7 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
         ]}
       />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {loading && <LoadingSpinner delay={600} message="Loading product catalog..." />}
+        {(loading || isNavigating) && <LoadingSpinner delay={300} message={isNavigating ? "Loading page..." : "Loading products..."} />}
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col gap-4 mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -438,6 +453,10 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
                     {filteredProducts.map((product) => (
                       <Link
                         href={`/products/${product.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleProductClick(product.id);
+                        }}
                         key={product.id}
                         className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 group relative"
                       >

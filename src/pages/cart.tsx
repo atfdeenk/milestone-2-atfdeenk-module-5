@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CartItem } from '../types';
 import { getAuthToken } from '../utils/auth';
 import Notification from '../components/Notification';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Cart() {
   const router = useRouter();
@@ -15,7 +16,12 @@ export default function Cart() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
+  const [isNavigating, setIsNavigating] = useState(false);
   const isLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('token') !== null : false;
+
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [router.asPath]);
 
   useEffect(() => {
     const loadCart = () => {
@@ -137,6 +143,16 @@ export default function Cart() {
     setShowCheckoutConfirm(true);
   };
 
+  const handleContinueShopping = async () => {
+    setIsNavigating(true);
+    await router.push('/products');
+  };
+
+  const handleNavigateToReceipt = async () => {
+    setIsNavigating(true);
+    await router.push('/receipt');
+  };
+
   const processCheckout = () => {
     setLoading(true);
     try {
@@ -170,13 +186,13 @@ export default function Cart() {
       // Store cart data temporarily for clearing after navigation
       localStorage.setItem('pendingClearCart', 'true');
 
-      // Navigate to receipt page first
-      router.push('/receipt').then(() => {
-        // Clear the cart after navigation
-        updateCart([]);
-        setShowCheckoutConfirm(false);
-        localStorage.removeItem('pendingClearCart');
-      });
+      // Navigate to receipt page
+      handleNavigateToReceipt();
+      
+      // Clear the cart after navigation
+      updateCart([]);
+      setShowCheckoutConfirm(false);
+      localStorage.removeItem('pendingClearCart');
     } catch (error) {
       console.error('Error processing checkout:', error);
       setNotificationType('error');
@@ -224,6 +240,12 @@ export default function Cart() {
           message={notificationMessage}
           type={notificationType}
           onClose={() => setShowNotification(false)}
+        />
+      )}
+      {(loading || isNavigating) && (
+        <LoadingSpinner 
+          delay={300} 
+          message={isNavigating ? "Loading page..." : "Processing..."} 
         />
       )}
       <div className="flex justify-between items-center mb-8">
@@ -385,6 +407,10 @@ export default function Cart() {
         <div className="flex flex-col sm:flex-row gap-4">
           <Link
             href="/products"
+            onClick={(e) => {
+              e.preventDefault();
+              handleContinueShopping();
+            }}
             className="flex-1 px-6 py-3 text-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
           >
             Continue Shopping
