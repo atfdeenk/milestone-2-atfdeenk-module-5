@@ -320,7 +320,7 @@ export default function Cart() {
             className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
           >
             <img
-              src={item.image || 'https://i.imgur.com/QkIa5tT.jpeg'}
+              src={(item.images && item.images.length > 0) ? item.images[0] : 'https://i.imgur.com/QkIa5tT.jpeg'}
               alt={item.title}
               className="w-24 h-24 object-cover rounded"
             />
