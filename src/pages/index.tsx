@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Geist } from "next/font/google";
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -8,6 +11,15 @@ const geistSans = Geist({
 });
 
 export default function Home() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleProductsClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    await router.push('/products');
+  };
+
   const features = [
     {
       title: "Wide Selection",
@@ -40,6 +52,7 @@ export default function Home() {
 
   return (
     <div className={`${geistSans.variable} min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900`}>
+      {isLoading && <LoadingSpinner delay={300} message="Taking you to products..." />}
       {/* Hero Section */}
       <div className="relative overflow-hidden px-6">
         {/* Background Pattern */}
@@ -66,6 +79,7 @@ export default function Home() {
                 <div className="mt-8 sm:mt-12 space-y-4 sm:space-y-0 sm:flex sm:gap-4 max-lg:justify-center">
                   <Link
                     href="/products"
+                    onClick={handleProductsClick}
                     className="group relative inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-lg font-medium rounded-xl overflow-hidden transition-all duration-300 hover:from-blue-700 hover:to-blue-800 hover:scale-105 shadow-lg hover:shadow-xl"
                   >
                     <span className="relative z-10 flex items-center">
