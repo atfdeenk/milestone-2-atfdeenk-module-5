@@ -184,8 +184,7 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
       filtered = filtered.filter((product) => {
         const searchTerms = searchValue.toLowerCase().split(' ');
         return searchTerms.every(term =>
-          product.title.toLowerCase().includes(term) ||
-          product.description.toLowerCase().includes(term)
+          product.title.toLowerCase().includes(term)
         );
       });
     }
