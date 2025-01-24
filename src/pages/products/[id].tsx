@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '../../types';
+import Notification from '../../components/Notification';
 
 interface ProductDetailProps {
   initialProduct: Product | null;
@@ -26,6 +27,9 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   const [success, setSuccess] = useState('');
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -116,13 +120,23 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
     const fetchProduct = async () => {
       try {
         setIsLoading(true);
+        setError(''); // Clear any previous errors
+        
         const response = await fetch(`https://api.escuelajs.co/api/v1/products/${id}`);
         
         if (!response.ok) {
-          throw new Error('Product not found');
+          if (response.status === 404) {
+            setError('Product not found');
+            return;
+          }
+          throw new Error('Failed to load product');
         }
         
         const data = await response.json();
+        if (!data || !data.id) {
+          throw new Error('Invalid product data received');
+        }
+
         console.log('Fetched product data:', data);
         setProduct(data);
         
@@ -145,41 +159,63 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       }
     };
 
-    fetchProduct();
+    // Only fetch if we don't have initialProduct
+    if (!initialProduct && id) {
+      fetchProduct();
+    }
   }, [id, router.isReady, initialProduct]);
 
   const addToCart = () => {
-    setIsAddingToCart(true);
-    
     try {
-      if (!product) return;
+      setIsAddingToCart(true);
       
+      if (!product) {
+        throw new Error('Product not found');
+      }
+
+      let currentCart = [];
       const userEmail = localStorage.getItem('userEmail');
       const cartKey = userEmail ? `cart_${userEmail}` : 'cart';
       
-      // Get cart from the appropriate storage key
-      const existingCart = JSON.parse(localStorage.getItem(cartKey) || '[]');
-      
-      const existingItemIndex = existingCart.findIndex((item: any) => item.id === product.id);
-      
-      if (existingItemIndex !== -1) {
-        existingCart[existingItemIndex].quantity += quantity;
-      } else {
-        existingCart.push({ ...product, quantity });
+      try {
+        const savedCart = localStorage.getItem(cartKey);
+        currentCart = savedCart ? JSON.parse(savedCart) : [];
+      } catch (err) {
+        console.error('Error parsing cart:', err);
       }
-      
-      // Save to both the user's cart and the general cart
-      localStorage.setItem(cartKey, JSON.stringify(existingCart));
-      localStorage.setItem('cart', JSON.stringify(existingCart));
-      
-      setSuccess('Added to cart successfully!');
-      setTimeout(() => setSuccess(''), 3000);
-      
-      // Dispatch cart update event
+
+      const existingItemIndex = currentCart.findIndex((item: any) => item.id === product.id);
+
+      if (existingItemIndex >= 0) {
+        currentCart[existingItemIndex].quantity += quantity;
+      } else {
+        currentCart.push({
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          image: selectedImage,
+          quantity: quantity
+        });
+      }
+
+      localStorage.setItem(cartKey, JSON.stringify(currentCart));
+      if (userEmail) {
+        localStorage.setItem('cart', JSON.stringify(currentCart)); // Sync with general cart
+      }
+
+      // Dispatch events to notify other components
+      window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new Event('cartUpdated'));
+
+      setNotificationType('success');
+      setNotificationMessage(`${product.title} added to cart`);
+      setShowNotification(true);
+      
     } catch (err) {
-      setError('Failed to add to cart');
-      setTimeout(() => setError(''), 3000);
+      console.error('Error adding to cart:', err);
+      setNotificationType('error');
+      setNotificationMessage('Failed to add item to cart');
+      setShowNotification(true);
     } finally {
       setIsAddingToCart(false);
     }
@@ -309,6 +345,13 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
 
   return (
     <div className="container mx-auto px-4 py-12">
+      {showNotification && (
+        <Notification
+          message={notificationMessage}
+          type={notificationType}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
       <div className="max-w-6xl mx-auto">
         {/* Back button - only visible on mobile */}
         <button
@@ -591,21 +634,37 @@ export const getServerSideProps: GetServerSideProps<ProductDetailProps> = async 
     const response = await fetch(`https://api.escuelajs.co/api/v1/products/${params.id}`);
     
     if (!response.ok) {
-      throw new Error('Product not found');
+      if (response.status === 404) {
+        return {
+          notFound: true
+        };
+      }
+      throw new Error(`Failed to fetch product: ${response.statusText}`);
     }
     
     const product = await response.json();
+    
+    if (!product || !product.id) {
+      return {
+        notFound: true
+      };
+    }
 
     // Fetch related products from the same category
     const relatedResponse = await fetch(
       `https://api.escuelajs.co/api/v1/products?categoryId=${product.category.id}&offset=0&limit=4`
     );
-    const relatedProducts = await relatedResponse.json();
+    
+    let relatedProducts = [];
+    if (relatedResponse.ok) {
+      const relatedData = await relatedResponse.json();
+      relatedProducts = relatedData.filter((p: Product) => p.id !== Number(params.id));
+    }
 
     return {
       props: {
         initialProduct: product,
-        relatedProducts: relatedProducts.filter((p: Product) => p.id !== Number(params.id)),
+        relatedProducts,
         error: null
       }
     };

@@ -6,11 +6,32 @@ export function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
                     request.nextUrl.pathname.startsWith('/register');
   
-  // Check if the requested page is a protected route (only cart and receipt)
+  // Check if the requested page is a protected route (cart and receipt)
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/cart') ||
                           request.nextUrl.pathname.startsWith('/receipt');
 
-  // For client-side auth check, we'll let the pages handle the auth check
+  // Get token from cookies
+  const token = request.cookies.get('token')?.value;
+
+  // If user is accessing auth page but already has token, redirect to products
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL('/products', request.url));
+  }
+
+  // If user is accessing protected route without token, redirect to login
+  if (isProtectedRoute && !token) {
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
+  }
+
+  // Add no-cache header to prevent caching of protected routes
+  if (isProtectedRoute) {
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
+  }
+
   return NextResponse.next();
 }
 

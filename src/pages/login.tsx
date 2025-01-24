@@ -48,7 +48,9 @@ const Login: NextPage = () => {
         throw new Error('No access token received');
       }
 
+      // Store token in both localStorage and cookies
       localStorage.setItem('token', data.access_token);
+      document.cookie = `token=${data.access_token}; path=/; max-age=86400; samesite=strict`;
 
       // Fetch user profile
       const profileResponse = await fetch('https://api.escuelajs.co/api/v1/auth/profile', {

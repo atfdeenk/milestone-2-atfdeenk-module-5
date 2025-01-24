@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CartItem } from '../types';
+import { getAuthToken } from '../utils/auth';
+import Notification from '../components/Notification';
 
 export default function Cart() {
   const router = useRouter();
@@ -10,6 +12,9 @@ export default function Cart() {
   const [loading, setLoading] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
   const isLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('token') !== null : false;
 
   useEffect(() => {
@@ -62,6 +67,28 @@ export default function Cart() {
     };
   }, []);
 
+  useEffect(() => {
+    // Check authentication status
+    const checkAuth = () => {
+      const token = getAuthToken();
+      if (!token) {
+        router.push('/login');
+      }
+    };
+
+    checkAuth();
+    
+    // Check auth status when storage changes
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [router]);
+
   const updateCart = (newCart: CartItem[]) => {
     try {
       setCart(newCart);
@@ -92,22 +119,18 @@ export default function Cart() {
     updateCart([]);
     setShowClearConfirm(false);
     
-    const message = document.createElement('div');
-    message.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg';
-    message.textContent = 'Cart cleared successfully';
-    document.body.appendChild(message);
+    setNotificationType('success');
+    setNotificationMessage('Cart cleared successfully');
+    setShowNotification(true);
     
-    setTimeout(() => message.remove(), 2000);
     setLoading(false);
   };
 
   const handleCheckout = () => {
     if (!isLoggedIn) {
-      const message = document.createElement('div');
-      message.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg';
-      message.textContent = 'Please login to checkout';
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      setNotificationType('error');
+      setNotificationMessage('Please login to checkout');
+      setShowNotification(true);
       return;
     }
 
@@ -193,6 +216,13 @@ export default function Cart() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {showNotification && (
+        <Notification
+          message={notificationMessage}
+          type={notificationType}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Shopping Cart</h1>
         <button
@@ -290,14 +320,13 @@ export default function Cart() {
             className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
           >
             <img
-              src={item.images[0]}
+              src={item.image || 'https://i.imgur.com/QkIa5tT.jpeg'}
               alt={item.title}
               className="w-24 h-24 object-cover rounded"
             />
             
             <div className="flex-grow">
               <h3 className="font-semibold mb-1 text-gray-900 dark:text-white">{item.title}</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{item.description}</p>
               <div className="text-blue-600 dark:text-blue-400 font-medium">${item.price.toFixed(2)} each</div>
             </div>
             

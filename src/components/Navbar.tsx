@@ -5,6 +5,7 @@ import { CartItem } from '../types';
 import { useTheme } from '../context/ThemeContext';
 import { FaShoppingCart, FaUser, FaBars, FaTimes } from 'react-icons/fa';
 import { BsSunFill, BsMoonStarsFill } from 'react-icons/bs';
+import { getAuthToken, removeAuthToken } from '../utils/auth';
 
 const Navbar = () => {
   const router = useRouter();
@@ -107,13 +108,15 @@ const Navbar = () => {
       }
     }
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('cart');
+    // Use auth utility to remove token from both localStorage and cookies
+    removeAuthToken();
+    
+    // Reset component state
     setIsLoggedIn(false);
     setUserName('');
     setCartItems([]);
+    
+    // Redirect to login
     router.push('/login');
   };
 
