@@ -18,7 +18,14 @@ interface ReceiptData {
 
 export default function Receipt() {
   const router = useRouter();
-  const receiptData = router.query.receiptData ? JSON.parse(router.query.receiptData as string) as ReceiptData : null;
+  let receiptData: ReceiptData | null = null;
+  
+  try {
+    receiptData = router.query.receiptData ? JSON.parse(router.query.receiptData as string) as ReceiptData : null;
+  } catch (error) {
+    // Invalid JSON, will redirect in useEffect
+  }
+  
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

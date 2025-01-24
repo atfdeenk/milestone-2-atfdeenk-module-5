@@ -242,6 +242,16 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
     router.push({ query }, undefined, { shallow: true });
   };
 
+  if (!products || products.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-gray-600 dark:text-gray-400">
+          No products found
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">

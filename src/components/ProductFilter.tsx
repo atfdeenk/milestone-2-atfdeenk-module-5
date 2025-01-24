@@ -37,6 +37,7 @@ const ProductFilter = ({ categories, onFilterChange, initialFilters, isVisible }
           className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           value={filters.category || ''}
           onChange={(e) => handleFilterChange({ category: e.target.value ? Number(e.target.value) : null })}
+          aria-label="Categories"
         >
           <option value="">All Categories</option>
           {categories.map((category) => (
@@ -77,6 +78,7 @@ const ProductFilter = ({ categories, onFilterChange, initialFilters, isVisible }
           className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           value={filters.sortBy}
           onChange={(e) => handleFilterChange({ sortBy: e.target.value })}
+          aria-label="Sort By"
         >
           <option value="">Most Recent</option>
           <option value="price">Price</option>
@@ -86,6 +88,7 @@ const ProductFilter = ({ categories, onFilterChange, initialFilters, isVisible }
           className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           value={filters.sortOrder}
           onChange={(e) => handleFilterChange({ sortOrder: e.target.value as 'asc' | 'desc' })}
+          aria-label="Sort Order"
         >
           <option value="desc">Descending</option>
           <option value="asc">Ascending</option>
