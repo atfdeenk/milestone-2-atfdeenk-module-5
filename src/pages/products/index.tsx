@@ -91,7 +91,14 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
   }, []);
 
   const sortProducts = useCallback((productsToSort: Product[], sortBy: string | null, sortOrder: 'asc' | 'desc') => {
-    if (!sortBy) return productsToSort;
+    if (!sortBy) {
+      // When no sort criteria is specified, prioritize products with valid images
+      return [...productsToSort].sort((a, b) => {
+        const aScore = getProductImageScore(a);
+        const bScore = getProductImageScore(b);
+        return sortOrder === 'asc' ? aScore - bScore : bScore - aScore;
+      });
+    }
 
     return [...productsToSort].sort((a, b) => {
       let comparison = 0;
@@ -103,13 +110,20 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
           comparison = a.title.localeCompare(b.title);
           break;
         default:
-          const dateA = new Date(a.createdAt).getTime();
-          const dateB = new Date(b.createdAt).getTime();
-          comparison = dateA - dateB;
+          // For default sorting (including date), also consider image validity as a secondary sort criteria
+          const aScore = getProductImageScore(a);
+          const bScore = getProductImageScore(b);
+          if (aScore !== bScore) {
+            comparison = bScore - aScore;
+          } else {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            comparison = dateA - dateB;
+          }
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, []);
+  }, [getProductImageScore]);
 
   useEffect(() => {
     const fetchProducts = async () => {
