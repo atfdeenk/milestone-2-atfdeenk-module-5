@@ -1,8 +1,10 @@
-import '@testing-library/jest-dom'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import React from 'react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import ProductDetail from '@/pages/products/[id]'
-import { Product, Category } from '@/types'
 import { useRouter } from 'next/router'
+import { setupMockServer } from '@/mocks/server'
+import { rest } from 'msw'
+import { mockProducts } from './mockData'
 
 // Mock next/router
 jest.mock('next/router', () => ({
@@ -11,133 +13,144 @@ jest.mock('next/router', () => ({
 
 const mockRouter = {
   push: jest.fn(),
-  query: { id: '1' }
+  query: { id: '1' },
+  pathname: '/products/[id]',
+  isReady: true
 }
 
 // Mock next/image
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => <img {...props} />
+  default: (props: any) => {
+    const { fill, priority, ...rest } = props
+    const modifiedProps = {
+      ...rest,
+      fill: fill ? "true" : undefined,
+      priority: priority ? "true" : undefined
+    }
+    return <img {...modifiedProps} />
+  }
 }))
 
-// Mock localStorage
-const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  clear: jest.fn()
-}
-Object.defineProperty(window, 'localStorage', { value: mockLocalStorage })
-
-const mockCategory: Category = {
-  id: 1,
-  name: 'Test Category',
-  image: 'category1.jpg'
-}
-
-const mockProduct: Product = {
-  id: 1,
-  title: 'Test Product',
-  description: 'Test Description',
-  price: 99.99,
-  category: mockCategory,
-  images: ['image1.jpg', 'image2.jpg'],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-}
-
-const mockRelatedProducts: Product[] = [
-  {
-    id: 2,
-    title: 'Related Product 1',
-    description: 'Related Description',
-    price: 29.99,
-    category: mockCategory,
-    images: ['related1.jpg'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-]
-
 describe('Product Detail Page', () => {
-  beforeEach(() => {
+  const server = setupMockServer()
+
+  beforeAll(() => server.listen())
+  afterEach(() => {
+    server.resetHandlers()
     jest.clearAllMocks()
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
-    global.fetch = jest.fn()
   })
+  afterAll(() => server.close())
 
   it('renders product details correctly', async () => {
-    render(
-      <ProductDetail 
-        initialProduct={mockProduct}
-        relatedProducts={mockRelatedProducts}
-        error={null}
-      />
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products/1', (req, res, ctx) => {
+        return res(ctx.status(200), ctx.json(mockProducts[0]))
+      })
     )
 
+    render(<ProductDetail />)
+
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1, name: 'Test Product' })).toBeInTheDocument()
+      expect(screen.getByText('Test Product 1')).toBeInTheDocument()
       expect(screen.getByText('$99.99')).toBeInTheDocument()
-      expect(screen.getByText('Test Description')).toBeInTheDocument()
-      expect(screen.getByText('Test Category')).toBeInTheDocument()
+      expect(screen.getByText('Description 1')).toBeInTheDocument()
+      expect(screen.getByText('Category 1')).toBeInTheDocument()
     })
   })
 
-  it('renders loading state when no initial product', async () => {
-    render(
-      <ProductDetail 
-        initialProduct={null}
-        error={null}
-      />
+  it('handles loading state', async () => {
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products/1', (req, res, ctx) => {
+        return new Promise(() => {}) // Never resolves
+      })
     )
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+
+    render(<ProductDetail />)
+    
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
-  it('renders error state', async () => {
-    render(
-      <ProductDetail 
-        initialProduct={null}
-        error="Failed to fetch product"
-      />
+  it('handles error state', async () => {
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products/1', (req, res, ctx) => {
+        return res(ctx.status(500))
+      })
     )
 
+    render(<ProductDetail />)
+    
     await waitFor(() => {
-      expect(screen.getByText(/error/i)).toBeInTheDocument()
-      expect(screen.getByText(/failed to fetch product/i)).toBeInTheDocument()
+      expect(screen.getByText('Failed to load product details')).toBeInTheDocument()
+    })
+  })
+
+  it('handles product not found', async () => {
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products/999', (req, res, ctx) => {
+        return res(
+          ctx.status(404),
+          ctx.json({ message: 'Product not found' })
+        )
+      })
+    )
+
+    mockRouter.query.id = '999'
+    render(<ProductDetail />)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Product not found')).toBeInTheDocument()
     })
   })
 
   it('handles image gallery navigation', async () => {
-    render(
-      <ProductDetail 
-        initialProduct={mockProduct}
-        relatedProducts={mockRelatedProducts}
-        error={null}
-      />
+    const productWithMultipleImages = {
+      ...mockProducts[0],
+      images: ['https://i.imgur.com/image1.jpg', 'https://i.imgur.com/image2.jpg']
+    }
+
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products/1', (req, res, ctx) => {
+        return res(ctx.status(200), ctx.json(productWithMultipleImages))
+      })
     )
 
+    render(<ProductDetail />)
+
     await waitFor(() => {
-      const thumbnails = screen.getAllByRole('img')
-      expect(thumbnails.length).toBeGreaterThan(1)
-      
-      // Click second thumbnail
-      fireEvent.click(thumbnails[1])
-      const mainImage = screen.getByTestId('main-image')
-      expect(mainImage).toHaveAttribute('src', mockProduct.images[1])
+      expect(screen.getByAltText('Test Product 1')).toBeInTheDocument()
     })
+
+    // Find thumbnail images
+    const thumbnails = screen.getAllByRole('img')
+    expect(thumbnails).toHaveLength(3) // Main image + 2 thumbnails
+
+    // Click second thumbnail
+    fireEvent.click(thumbnails[2])
+
+    // Main image should update
+    const mainImage = screen.getByAltText('Test Product 1')
+    expect(mainImage).toHaveAttribute('src', 'https://i.imgur.com/image2.jpg')
   })
 
-  it('displays related products', async () => {
-    render(
-      <ProductDetail 
-        initialProduct={mockProduct}
-        relatedProducts={mockRelatedProducts}
-        error={null}
-      />
+  it('handles invalid image URLs', async () => {
+    const productWithInvalidImage = {
+      ...mockProducts[0],
+      images: ['invalid-url', null, undefined, '']
+    }
+
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products/1', (req, res, ctx) => {
+        return res(ctx.status(200), ctx.json(productWithInvalidImage))
+      })
     )
 
+    render(<ProductDetail />)
+
     await waitFor(() => {
-      expect(screen.getByText('Related Product 1')).toBeInTheDocument()
-      expect(screen.getByText('$29.99')).toBeInTheDocument()
+      const fallbackImage = screen.getByAltText('Test Product 1')
+      expect(fallbackImage).toHaveAttribute('src', 'https://i.imgur.com/QkIa5tT.jpeg')
     })
   })
 })

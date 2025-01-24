@@ -2,8 +2,6 @@ export interface Category {
   id: number;
   name: string;
   image: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface Product {
@@ -14,7 +12,7 @@ export interface Product {
   images: string[];
   category: Category;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface CartItem extends Product {
@@ -49,4 +47,12 @@ export interface Order {
 
 export interface OrderHistory {
   [email: string]: Order[];
+}
+
+export interface FilterState {
+  category: string | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  sortBy: string | null;
+  sortOrder: 'asc' | 'desc';
 }

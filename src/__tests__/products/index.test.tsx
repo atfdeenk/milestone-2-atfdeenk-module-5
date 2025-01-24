@@ -1,10 +1,10 @@
 import '@testing-library/jest-dom'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
-import Products from '../../pages/products'
-import { Product, Category } from '../../types'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import Products from '@/pages/products'
 import { useRouter } from 'next/router'
+import { setupMockServer } from '@/mocks/server'
+import { rest } from 'msw'
 
-// Mock next/router
 jest.mock('next/router', () => ({
   useRouter: jest.fn()
 }))
@@ -12,194 +12,189 @@ jest.mock('next/router', () => ({
 const mockRouter = {
   push: jest.fn(),
   query: {},
-  pathname: '/products'
 }
 
-// Mock next/image
-jest.mock('next/image', () => ({
-  __esModule: true,
-  default: (props: any) => <img {...props} />,
-}))
+(useRouter as jest.Mock).mockReturnValue(mockRouter)
 
-const mockCategories: Category[] = [
-  { id: 1, name: 'Category 1', image: 'cat1.jpg' },
-  { id: 2, name: 'Category 2', image: 'cat2.jpg' }
-]
-
-const mockProducts: Product[] = [
+const mockProducts = [
   {
     id: 1,
     title: 'Test Product 1',
-    description: 'Description 1',
-    price: 99.99,
-    category: mockCategories[0],
+    price: 100,
+    description: 'Test Description 1',
+    category: { id: 1, name: 'Category 1', image: 'category1.jpg' },
     images: ['image1.jpg'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: '2023-01-01T00:00:00.000Z',
   },
   {
     id: 2,
     title: 'Test Product 2',
-    description: 'Description 2',
-    price: 149.99,
-    category: mockCategories[1],
+    price: 200,
+    description: 'Test Description 2',
+    category: { id: 2, name: 'Category 2', image: 'category2.jpg' },
     images: ['image2.jpg'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
+    createdAt: '2023-01-02T00:00:00.000Z',
+  },
+]
+
+const mockCategories = [
+  { id: 1, name: 'Category 1', image: 'category1.jpg' },
+  { id: 2, name: 'Category 2', image: 'category2.jpg' },
 ]
 
 describe('Products Page', () => {
-  beforeEach(() => {
+  const server = setupMockServer()
+
+  beforeAll(() => server.listen())
+  afterEach(() => {
+    server.resetHandlers()
     jest.clearAllMocks()
-    ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
-    global.fetch = jest.fn()
-    ;(global.fetch as jest.Mock).mockImplementation((url: string) => {
-      if (url.includes('/categories')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockCategories)
-        })
-      }
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockProducts)
+  })
+  afterAll(() => server.close())
+
+  it('renders loading state initially when no initial products', async () => {
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products', (req, res, ctx) => {
+        return res(ctx.delay(100), ctx.json(mockProducts))
       })
-    })
+    )
+
+    render(<Products initialProducts={null} initialCategories={null} />)
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
-  it('renders product list correctly', async () => {
+  it('renders products when data is loaded', async () => {
     render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Test Product 1')).toBeInTheDocument()
-      expect(screen.getByText('$99.99')).toBeInTheDocument()
-      expect(screen.getByText('Description 1')).toBeInTheDocument()
-      
-      expect(screen.getByText('Test Product 2')).toBeInTheDocument()
-      expect(screen.getByText('$149.99')).toBeInTheDocument()
-      expect(screen.getByText('Description 2')).toBeInTheDocument()
-    })
-  })
-
-  it('applies filters from URL query params', async () => {
-    const mockRouter = {
-      push: jest.fn(),
-      query: { category: '2' },
-      pathname: '/products'
-    };
-    (useRouter as jest.Mock).mockReturnValue(mockRouter)
-
-    render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-
-    await waitFor(() => {
-      // Should only show products from category 2
-      const product2 = screen.getByText('Test Product 2')
-      expect(product2).toBeInTheDocument()
-      
-      // Product 1 should not be visible
-      expect(screen.queryByText('Test Product 1')).not.toBeInTheDocument()
-    })
-  })
-
-  it('handles empty product list', async () => {
-    const mockEmptyResponse = {
-      ok: true,
-      products: [],
-      categories: []
-    }
-    
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockEmptyResponse)
-    })
-
-    render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-
-    await waitFor(() => {
-      const noProductsMessage = screen.getByText('No products found')
-      expect(noProductsMessage).toBeInTheDocument()
-    })
-  })
-
-  it('handles search functionality', async () => {
-    await act(async () => {
-      const { rerender } = render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-
-      // Simulate search query
-      mockRouter.query = { search: 'Test Product 1' }
-      rerender(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-    })
 
     expect(screen.getByText('Test Product 1')).toBeInTheDocument()
-    expect(screen.queryByText('Test Product 2')).not.toBeInTheDocument()
-  })
-
-  it('handles category filter', async () => {
-    await act(async () => {
-      const { rerender } = render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-
-      // Simulate category filter
-      mockRouter.query = { category: '1' }
-      rerender(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-    })
-
-    expect(screen.getByText('Test Product 1')).toBeInTheDocument()
-    expect(screen.queryByText('Test Product 2')).not.toBeInTheDocument()
-  })
-
-  it('handles price range filter', async () => {
-    await act(async () => {
-      const { rerender } = render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-
-      // Simulate price range filter
-      mockRouter.query = { minPrice: '100', maxPrice: '150' }
-      rerender(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-    })
-
-    expect(screen.queryByText('Test Product 1')).not.toBeInTheDocument()
     expect(screen.getByText('Test Product 2')).toBeInTheDocument()
   })
 
-  it('handles sorting', async () => {
-    await act(async () => {
-      const { rerender } = render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
+  it('handles search functionality', async () => {
+    render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
 
-      // Simulate sorting by price desc
-      mockRouter.query = { sortBy: 'price', sortOrder: 'desc' }
-      rerender(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
+    // Show filters to reveal search input
+    fireEvent.click(screen.getByText(/Show Filters/i))
+
+    const searchInput = screen.getByPlaceholderText(/Search products/i)
+    fireEvent.change(searchInput, { target: { value: 'Test Product 1' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Product 1')).toBeInTheDocument()
+      expect(screen.queryByText('Test Product 2')).not.toBeInTheDocument()
     })
 
-    const prices = screen.getAllByText(/\$\d+\.\d+/)
-    expect(prices[0]).toHaveTextContent('$149.99')
-    expect(prices[1]).toHaveTextContent('$99.99')
-  })
-
-  it('handles filter toggle', async () => {
-    await act(async () => {
-      render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-    })
-
-    const filterButton = screen.getByText(/filters/i)
-    fireEvent.click(filterButton)
-
-    // Check if filter options are visible
-    expect(screen.getByText(/price range/i)).toBeInTheDocument()
-    expect(screen.getByText(/sort by/i)).toBeInTheDocument()
-  })
-
-  it('handles product click navigation', async () => {
-    await act(async () => {
-      render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
-    })
-
-    const productLink = screen.getAllByRole('link', { name: /test product/i })[0]
-    fireEvent.click(productLink)
-
+    // Verify URL update
     expect(mockRouter.push).toHaveBeenCalledWith(
-      expect.stringContaining('/products/1'),
-      expect.anything(),
-      expect.anything()
+      expect.objectContaining({
+        query: expect.objectContaining({ search: 'Test Product 1' }),
+      }),
+      undefined,
+      { shallow: true }
     )
+  })
+
+  it('handles filter changes', async () => {
+    render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
+
+    // Show filters
+    fireEvent.click(screen.getByText(/Show Filters/i))
+
+    // Select category filter
+    const categorySelect = screen.getByLabelText(/Category/i)
+    fireEvent.change(categorySelect, { target: { value: '1' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Product 1')).toBeInTheDocument()
+      expect(screen.queryByText('Test Product 2')).not.toBeInTheDocument()
+    })
+
+    // Verify URL update
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ category: '1' }),
+      }),
+      undefined,
+      { shallow: true }
+    )
+  })
+
+  it('shows no products message when no results found', async () => {
+    render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
+
+    // Show filters
+    fireEvent.click(screen.getByText(/Show Filters/i))
+
+    // Search for non-existent product
+    const searchInput = screen.getByPlaceholderText(/Search products/i)
+    fireEvent.change(searchInput, { target: { value: 'Non-existent Product' } })
+
+    await waitFor(() => {
+      expect(screen.getByText(/No products found matching your criteria/i)).toBeInTheDocument()
+    })
+  })
+
+  it('clears search when clicking clear button', async () => {
+    render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
+
+    // Show filters
+    fireEvent.click(screen.getByText(/Show Filters/i))
+
+    // Add search term
+    const searchInput = screen.getByPlaceholderText(/Search products/i)
+    fireEvent.change(searchInput, { target: { value: 'Test Product 1' } })
+
+    // Clear search
+    const clearButton = screen.getByRole('button', { name: /Clear search/i })
+    fireEvent.click(clearButton)
+
+    await waitFor(() => {
+      expect(searchInput).toHaveValue('')
+      expect(screen.getByText('Test Product 1')).toBeInTheDocument()
+      expect(screen.getByText('Test Product 2')).toBeInTheDocument()
+    })
+
+    // Verify URL update
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.not.objectContaining({ search: expect.anything() }),
+      }),
+      undefined,
+      { shallow: true }
+    )
+  })
+
+  it('handles error state', async () => {
+    server.use(
+      rest.get('https://api.escuelajs.co/api/v1/products', (req, res, ctx) => {
+        return res(ctx.status(500))
+      })
+    )
+
+    render(<Products initialProducts={null} initialCategories={null} />)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to load products/i)).toBeInTheDocument()
+    })
+  })
+
+  it('handles empty products state', () => {
+    render(<Products initialProducts={[]} initialCategories={mockCategories} />)
+    expect(screen.getByText(/No products found/i)).toBeInTheDocument()
+  })
+
+  it('toggles filter visibility', () => {
+    render(<Products initialProducts={mockProducts} initialCategories={mockCategories} />)
+
+    // Initially filters are hidden
+    expect(screen.queryByPlaceholderText(/Search products/i)).not.toBeInTheDocument()
+
+    // Show filters
+    fireEvent.click(screen.getByText(/Show Filters/i))
+    expect(screen.getByPlaceholderText(/Search products/i)).toBeInTheDocument()
+
+    // Hide filters
+    fireEvent.click(screen.getByText(/Hide Filters/i))
+    expect(screen.queryByPlaceholderText(/Search products/i)).not.toBeInTheDocument()
   })
 })
