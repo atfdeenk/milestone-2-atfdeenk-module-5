@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { Category } from '../types';
 
 interface FilterState {
-  category: number | null;
-  priceRange: {
-    min: number;
-    max: number;
-  };
-  sortBy: string;
+  category: string | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  sortBy: string | null;
   sortOrder: 'asc' | 'desc';
 }
 
@@ -36,7 +34,7 @@ const ProductFilter = ({ categories, onFilterChange, initialFilters, isVisible }
         <select
           className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           value={filters.category || ''}
-          onChange={(e) => handleFilterChange({ category: e.target.value ? Number(e.target.value) : null })}
+          onChange={(e) => handleFilterChange({ category: e.target.value || null })}
           aria-label="Categories"
         >
           <option value="">All Categories</option>
@@ -54,20 +52,18 @@ const ProductFilter = ({ categories, onFilterChange, initialFilters, isVisible }
           <input
             type="number"
             placeholder="Min"
+            value={filters.minPrice || ''}
+            onChange={(e) => handleFilterChange({ minPrice: e.target.value ? Number(e.target.value) : null })}
             className="w-1/2 p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-            value={filters.priceRange.min || ''}
-            onChange={(e) => handleFilterChange({
-              priceRange: { ...filters.priceRange, min: Number(e.target.value) }
-            })}
+            min="0"
           />
           <input
             type="number"
             placeholder="Max"
+            value={filters.maxPrice || ''}
+            onChange={(e) => handleFilterChange({ maxPrice: e.target.value ? Number(e.target.value) : null })}
             className="w-1/2 p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-            value={filters.priceRange.max || ''}
-            onChange={(e) => handleFilterChange({
-              priceRange: { ...filters.priceRange, max: Number(e.target.value) }
-            })}
+            min="0"
           />
         </div>
       </div>
@@ -76,8 +72,8 @@ const ProductFilter = ({ categories, onFilterChange, initialFilters, isVisible }
         <h3 className="font-semibold text-gray-800 dark:text-white">Sort By</h3>
         <select
           className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-          value={filters.sortBy}
-          onChange={(e) => handleFilterChange({ sortBy: e.target.value })}
+          value={filters.sortBy || ''}
+          onChange={(e) => handleFilterChange({ sortBy: e.target.value || null })}
           aria-label="Sort By"
         >
           <option value="">Most Recent</option>
@@ -100,8 +96,9 @@ const ProductFilter = ({ categories, onFilterChange, initialFilters, isVisible }
         onClick={() => {
           const defaultFilters: FilterState = {
             category: null,
-            priceRange: { min: 0, max: 0 },
-            sortBy: '',
+            minPrice: null,
+            maxPrice: null,
+            sortBy: null,
             sortOrder: 'desc' as const
           };
           setFilters(defaultFilters);

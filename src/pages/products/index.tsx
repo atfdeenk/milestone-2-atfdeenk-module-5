@@ -264,52 +264,86 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Products</h1>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center gap-2"
-        >
-          {showFilters ? (
-            <>
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  clipRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  fillRule="evenodd"
-                />
-              </svg>
-              Hide Filters
-            </>
-          ) : (
-            <>
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  clipRule="evenodd"
-                  d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
-                  fillRule="evenodd"
-                />
-              </svg>
-              Show Filters
-            </>
-          )}
-        </button>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Products</h1>
+          <div className="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center gap-2">
+            <div className="relative flex-1 min-w-[200px]">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchValue}
+                onChange={handleSearch}
+                className="w-full pl-10 pr-4 py-2.5 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 focus:outline-none transition-all duration-200"
+              />
+              {searchValue && (
+                <button
+                  onClick={() => {
+                    setSearchValue('');
+                    clearSearch(router, setSearchValue);
+                  }}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${
+                showFilters
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/70'
+                  : 'bg-blue-600 text-white dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600'
+              }`}
+            >
+              {showFilters ? (
+                <>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Hide Filters</span>
+                  <span className="sm:hidden">Hide</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Show Filters</span>
+                  <span className="sm:hidden">Filter</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+        
+        <div className="relative w-full">
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
         {showFilters && (
           <div className="md:w-1/4">
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold text-gray-800 dark:text-white">Search</h3>
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchValue}
-                  onChange={handleSearch}
-                  className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-                />
-              </div>
               <ProductFilter
                 categories={categories}
                 onFilterChange={handleFilterChange}
@@ -331,36 +365,40 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
               {(searchValue || filters.category) && (
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold mb-4">
-                    <span>
-                      {searchValue ? (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-gray-800 dark:text-white inline-flex items-center gap-2 flex-wrap">
-                            <span className="whitespace-nowrap">
-                              Search results for "
-                              <span className="text-blue-600 dark:text-blue-400">{searchValue}</span>
-                              "
-                            </span>
-                            <span className="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
-                              ({filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'})
-                            </span>
-                            <button
-                              onClick={() => clearSearch(router, setSearchValue)}
-                              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                  fillRule="evenodd"
-                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
+                    {searchValue ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-gray-800 dark:text-white inline-flex items-center gap-2 flex-wrap">
+                          <span className="whitespace-nowrap">
+                            Search results for "
+                            <span className="text-blue-600 dark:text-blue-400">{searchValue}</span>
+                            "
                           </span>
-                        </div>
-                      ) : (
-                        "All Products"
-                      )}
-                    </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                            ({filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'})
+                          </span>
+                          <button
+                            onClick={() => clearSearch(router, setSearchValue)}
+                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-gray-800 dark:text-white inline-flex items-center gap-2 flex-wrap">
+                          <span className="whitespace-nowrap">
+                            All Products
+                          </span>
+                        </span>
+                      </div>
+                    )}
                   </h2>
                 </div>
               )}

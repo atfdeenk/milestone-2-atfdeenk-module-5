@@ -31,7 +31,7 @@ const Notification = ({
   if (!isVisible) return null;
 
   const baseClasses = "fixed z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 flex items-center top-auto right-4";
-  const positionClasses = "top-4 right-4";
+  const positionClasses = "top-14 right-4";
   const typeClasses = {
     success: "bg-green-500 text-white",
     error: "bg-red-500 text-white",

@@ -41,7 +41,7 @@ export default function Home() {
   return (
     <div className={`${geistSans.variable} min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900`}>
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden px-6">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-gradient-to-br from-pink-100/30 to-blue-100/30 dark:from-pink-900/30 dark:to-blue-900/30" />
         <div className="absolute inset-y-0 right-0 w-full lg:w-2/3 bg-gradient-to-l from-blue-50/50 via-white/50 to-transparent dark:from-blue-950/50 dark:via-gray-900/50" />

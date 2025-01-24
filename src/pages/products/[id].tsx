@@ -259,11 +259,11 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
         localStorage.setItem(orderHistoryKey, JSON.stringify(existingOrders));
       }
 
+      // Store receipt data in localStorage for immediate access
+      localStorage.setItem('lastReceipt', JSON.stringify(receiptData));
+
       // Navigate to receipt page
-      router.push({
-        pathname: '/receipt',
-        query: { receiptData: JSON.stringify(receiptData) }
-      });
+      router.push('/receipt');
     } catch (err) {
       console.error('Error processing order:', err);
       setError('Error processing order');
@@ -283,26 +283,37 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       const userEmail = localStorage.getItem('userEmail');
       if (!userEmail) throw new Error('User email not found');
       
-      const order = {
-        orderId: Date.now(),
-        items: [{ ...product, quantity }],
-        total: product.price * quantity,
-        date: new Date().toISOString(),
-        status: 'completed' as const
+      const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const orderDate = new Date().toLocaleString();
+
+      const receiptData = {
+        items: [{
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          quantity: quantity
+        }],
+        totalPrice: product.price * quantity,
+        orderDate,
+        orderNumber
       };
       
+      // Store order in history
       const orderHistoryKey = `orders_${userEmail}`;
       const existingOrders = JSON.parse(localStorage.getItem(orderHistoryKey) || '[]');
-      existingOrders.push(order);
+      existingOrders.push(receiptData);
       localStorage.setItem(orderHistoryKey, JSON.stringify(existingOrders));
       
+      // Store receipt data in localStorage for immediate access
+      localStorage.setItem('lastReceipt', JSON.stringify(receiptData));
+      
+      // Navigate to receipt page
       router.push('/receipt');
     } catch (err) {
       setError('Failed to process order');
       setTimeout(() => setError(''), 3000);
     } finally {
       setIsBuyingNow(false);
-      setShowCheckoutConfirm(false);
     }
   };
 

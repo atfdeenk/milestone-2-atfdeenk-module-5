@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
@@ -18,21 +18,61 @@ interface ReceiptData {
 
 export default function Receipt() {
   const router = useRouter();
-  let receiptData: ReceiptData | null = null;
-  
-  try {
-    receiptData = router.query.receiptData ? JSON.parse(router.query.receiptData as string) as ReceiptData : null;
-  } catch (error) {
-    // Invalid JSON, will redirect in useEffect
-  }
-  
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!receiptData) {
-      router.push('/cart');
+    // First try to get from localStorage
+    const storedReceipt = localStorage.getItem('lastReceipt');
+    if (storedReceipt) {
+      try {
+        const parsedReceipt = JSON.parse(storedReceipt);
+        setReceiptData(parsedReceipt);
+        setIsLoading(false);
+        localStorage.removeItem('lastReceipt'); // Clear after loading
+
+        // Check if we need to clear the cart (from checkout flow)
+        const pendingClearCart = localStorage.getItem('pendingClearCart');
+        if (pendingClearCart) {
+          const userEmail = localStorage.getItem('userEmail');
+          if (userEmail) {
+            localStorage.removeItem(`cart_${userEmail}`);
+          }
+          localStorage.removeItem('cart');
+          localStorage.removeItem('pendingClearCart');
+        }
+        return;
+      } catch (error) {
+        console.error('Error parsing stored receipt:', error);
+      }
     }
-  }, [receiptData, router]);
+
+    // If not in localStorage, try query params
+    if (router.query.receiptData) {
+      try {
+        const parsedReceipt = JSON.parse(router.query.receiptData as string) as ReceiptData;
+        setReceiptData(parsedReceipt);
+      } catch (error) {
+        console.error('Error parsing receipt data from query:', error);
+        router.push('/cart');
+      }
+    }
+    setIsLoading(false);
+  }, [router.query.receiptData]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!receiptData) {
+    router.push('/cart');
+    return null;
+  }
 
   const handlePrint = () => {
     if (!receiptData) return;
@@ -103,10 +143,6 @@ export default function Receipt() {
     printWindow.document.close();
     printWindow.print();
   };
-
-  if (!receiptData) {
-    return null;
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">

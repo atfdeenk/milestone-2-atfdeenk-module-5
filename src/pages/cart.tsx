@@ -155,10 +155,6 @@ export default function Cart() {
         orderNumber
       };
 
-      // Clear the cart
-      updateCart([]);
-      setShowCheckoutConfirm(false);
-
       // Store order in history if user is logged in
       const userEmail = localStorage.getItem('userEmail');
       if (userEmail) {
@@ -168,18 +164,25 @@ export default function Cart() {
         localStorage.setItem(orderHistoryKey, JSON.stringify(existingOrders));
       }
 
-      // Navigate to receipt page with data
-      router.push({
-        pathname: '/receipt',
-        query: { receiptData: JSON.stringify(receiptData) }
+      // Store receipt data in localStorage for immediate access
+      localStorage.setItem('lastReceipt', JSON.stringify(receiptData));
+
+      // Store cart data temporarily for clearing after navigation
+      localStorage.setItem('pendingClearCart', 'true');
+
+      // Navigate to receipt page first
+      router.push('/receipt').then(() => {
+        // Clear the cart after navigation
+        updateCart([]);
+        setShowCheckoutConfirm(false);
+        localStorage.removeItem('pendingClearCart');
       });
     } catch (error) {
       console.error('Error processing checkout:', error);
-      const message = document.createElement('div');
-      message.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg';
-      message.textContent = 'Error processing checkout';
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      setNotificationType('error');
+      setNotificationMessage('Error processing checkout');
+      setShowNotification(true);
+      localStorage.removeItem('pendingClearCart');
     } finally {
       setLoading(false);
     }
