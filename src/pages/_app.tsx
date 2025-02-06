@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { getAuthToken } from "../utils/auth";
 import Footer from "../components/Footer";
+import ChatWidget from "../components/LiveChat/ChatWidget";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -54,6 +55,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <Component {...pageProps} />
         </main>
         {!hideNavbarPaths.includes(router.pathname) && <Footer />}
+        {!hideNavbarPaths.includes(router.pathname) && <ChatWidget />}
       </div>
     </ThemeProvider>
   );
