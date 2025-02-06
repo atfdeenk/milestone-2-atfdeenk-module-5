@@ -145,6 +145,7 @@ const Navbar = () => {
                 )}
               </button>
               {/* Cart and Profile buttons */}
+
               <Link
                 href="/cart"
                 onClick={handleCartClick}
@@ -172,9 +173,15 @@ const Navbar = () => {
                     </div>
                   </div>
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-700/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-1">
+                    <Link
+                      href="/profile"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      Profile
+                    </Link>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                     >
                       Logout
                     </button>
@@ -241,6 +248,7 @@ const Navbar = () => {
                         Logout
                       </button>
                     </div>
+
                   </>
                 ) : (
                   <div className="space-y-2">

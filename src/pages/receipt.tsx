@@ -36,6 +36,20 @@ export default function Receipt() {
         const parsedReceipt = JSON.parse(storedReceipt);
         setReceiptData(parsedReceipt);
         setIsLoading(false);
+
+        // Save to order history
+        const userEmail = localStorage.getItem('userEmail');
+        if (userEmail) {
+          const orderHistoryKey = `orderHistory_${userEmail}`;
+          let orderHistory = [];
+          const savedHistory = localStorage.getItem(orderHistoryKey);
+          if (savedHistory) {
+            orderHistory = JSON.parse(savedHistory);
+          }
+          orderHistory.unshift(parsedReceipt); // Add new order at the beginning
+          localStorage.setItem(orderHistoryKey, JSON.stringify(orderHistory));
+        }
+
         localStorage.removeItem('lastReceipt'); // Clear after loading
 
         // Check if we need to clear the cart (from checkout flow)

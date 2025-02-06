@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Product, Category } from '../../types';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import ProductFilter from '../../components/ProductFilter';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { GetServerSideProps } from 'next';
@@ -38,6 +39,37 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts || []);
   const [searchValue, setSearchValue] = useState(search as string || '');
   const [isNavigating, setIsNavigating] = useState(false);
+  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email);
+
+    if (email) {
+      const favoritesData = localStorage.getItem(`favorites_${email}`);
+      if (favoritesData) {
+        setFavorites(JSON.parse(favoritesData));
+      }
+    }
+  }, []);
+
+  const toggleFavorite = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault(); // Prevent navigation
+    if (!userEmail) return;
+
+    const isFavorite = favorites.some(fav => fav.id === product.id);
+    let updatedFavorites;
+
+    if (isFavorite) {
+      updatedFavorites = favorites.filter(fav => fav.id !== product.id);
+    } else {
+      updatedFavorites = [...favorites, product];
+    }
+
+    setFavorites(updatedFavorites);
+    localStorage.setItem(`favorites_${userEmail}`, JSON.stringify(updatedFavorites));
+  };
 
   const defaultFilters: FilterState = {
     category: null,
@@ -451,43 +483,57 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredProducts.map((product) => (
-                      <Link
-                        href={`/products/${product.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleProductClick(product.id);
-                        }}
-                        key={product.id}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 group relative"
-                      >
-                        <div className="relative pb-[100%]">
-                          <Image
-                            src={getValidImageUrl(product)}
-                            alt={product.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-200"
-                            priority={true} // Load all images immediately
-                          />
-                          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
-                        </div>
-                        <div className="p-4">
-                          <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white truncate group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors duration-200">
-                            {product.title}
-                          </h3>
-                          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
-                            {product.description}
-                          </p>
-                          <div className="flex justify-between items-center">
-                            <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                              ${product.price.toLocaleString()}
-                            </span>
-                            <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                              {product.category.name}
-                            </span>
+                      <div key={product.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 group relative">
+                        <div 
+                          onClick={() => handleProductClick(product.id)}
+                          className="cursor-pointer"
+                        >
+                          <div className="relative pb-[100%]">
+                            <Image
+                              src={getValidImageUrl(product)}
+                              alt={product.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              className="object-cover group-hover:scale-105 transition-transform duration-200"
+                              priority={true} // Load all images immediately
+                            />
+                            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
+                            {userEmail && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleFavorite(e, product);
+                                }}
+                                className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg text-red-500 hover:text-red-600 transition-colors duration-200 z-10"
+                                title={favorites.some(fav => fav.id === product.id) ? 'Remove from favorites' : 'Add to favorites'}
+                              >
+                                {favorites.some(fav => fav.id === product.id) ? (
+                                  <FaHeart className="h-5 w-5" />
+                                ) : (
+                                  <FaRegHeart className="h-5 w-5" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          <div className="p-4">
+                            <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white truncate group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors duration-200">
+                              {product.title}
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
+                              {product.description}
+                            </p>
+                            <div className="flex justify-between items-center">
+                              <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                ${product.price.toLocaleString()}
+                              </span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                                {product.category.name}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
 
@@ -534,7 +580,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
     ]);
 
     // Server-side filtering for price range
-    let filteredProducts = products as Product[];
+    let filteredProducts = [...products] as Product[];
     if (minPrice || maxPrice) {
       filteredProducts = filteredProducts.filter((product: Product) => {
         const price = Number(product.price);
@@ -565,7 +611,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
       category: category ? category : null,
       minPrice: minPrice ? Number(minPrice) : null,
       maxPrice: maxPrice ? Number(maxPrice) : null,
-      sortBy: sortBy || '',
+      sortBy: sortBy || null,
       sortOrder: (sortOrder as 'asc' | 'desc') || 'desc'
     };
 
@@ -574,7 +620,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
         initialProducts: filteredProducts,
         initialCategories: categories,
         appliedFilters
-      },
+      }
     };
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -586,11 +632,11 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
           category: null,
           minPrice: null,
           maxPrice: null,
-          sortBy: '',
+          sortBy: null,
           sortOrder: 'desc'
         },
         error: 'Failed to fetch data'
-      },
+      }
     };
   }
 };

@@ -1,5 +1,17 @@
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  rating: number;
+  reviews: number;
+}
 
 const recommendedProducts = [
   {
@@ -41,6 +53,37 @@ const recommendedProducts = [
 ];
 
 export default function RecommendedProducts() {
+  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email);
+
+    if (email) {
+      const favoritesData = localStorage.getItem(`favorites_${email}`);
+      if (favoritesData) {
+        setFavorites(JSON.parse(favoritesData));
+      }
+    }
+  }, []);
+
+  const toggleFavorite = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault(); // Prevent navigation
+    if (!userEmail) return;
+
+    const isFavorite = favorites.some(fav => fav.id === product.id);
+    let updatedFavorites;
+
+    if (isFavorite) {
+      updatedFavorites = favorites.filter(fav => fav.id !== product.id);
+    } else {
+      updatedFavorites = [...favorites, product];
+    }
+
+    setFavorites(updatedFavorites);
+    localStorage.setItem(`favorites_${userEmail}`, JSON.stringify(updatedFavorites));
+  };
   return (
     <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-800/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -69,7 +112,19 @@ export default function RecommendedProducts() {
                   className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <div className="mt-4">
+              <div className="mt-4 relative">
+                {userEmail && (
+                  <button
+                    onClick={(e) => toggleFavorite(e, product)}
+                    className="absolute top-0 right-0 p-2 text-red-500 hover:text-red-600 transition-colors duration-200"
+                  >
+                    {favorites.some(fav => fav.id === product.id) ? (
+                      <FaHeart className="h-6 w-6" />
+                    ) : (
+                      <FaRegHeart className="h-6 w-6" />
+                    )}
+                  </button>
+                )}
                 <h3 className="text-sm text-gray-500 dark:text-gray-400">{product.category}</h3>
                 <p className="mt-1 text-lg font-medium text-gray-900 dark:text-white">{product.name}</p>
                 <div className="mt-1 flex items-center justify-between">

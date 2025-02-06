@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Product } from '../../types';
 import Notification from '../../components/Notification';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 
 interface ProductDetailProps {
   initialProduct: Product | null;
@@ -32,6 +33,41 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
+  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email);
+
+    if (email) {
+      const favoritesData = localStorage.getItem(`favorites_${email}`);
+      if (favoritesData) {
+        setFavorites(JSON.parse(favoritesData));
+      }
+    }
+  }, []);
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!userEmail || !product) return;
+
+    const isFavorite = favorites.some(fav => fav.id === product.id);
+    let updatedFavorites;
+
+    if (isFavorite) {
+      updatedFavorites = favorites.filter(fav => fav.id !== product.id);
+      setNotificationMessage('Removed from favorites');
+    } else {
+      updatedFavorites = [...favorites, product];
+      setNotificationMessage('Added to favorites');
+    }
+
+    setFavorites(updatedFavorites);
+    localStorage.setItem(`favorites_${userEmail}`, JSON.stringify(updatedFavorites));
+    setNotificationType('success');
+    setShowNotification(true);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -459,10 +495,25 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4">
-                  <label htmlFor="quantity" className="text-gray-700 dark:text-gray-300 font-medium">
-                    Quantity:
-                  </label>
+                <div className="flex items-center gap-4 justify-between w-full">
+                  <div className="flex items-center gap-4">
+                    <label htmlFor="quantity" className="text-gray-700 dark:text-gray-300 font-medium">
+                      Quantity:
+                    </label>
+                  </div>
+                  {userEmail && (
+                    <button
+                      onClick={toggleFavorite}
+                      className="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-lg text-red-500 hover:text-red-600 transition-colors duration-200"
+                      title={favorites.some(fav => fav.id === product?.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      {favorites.some(fav => fav.id === product?.id) ? (
+                        <FaHeart className="h-6 w-6" />
+                      ) : (
+                        <FaRegHeart className="h-6 w-6" />
+                      )}
+                    </button>
+                  )}
                   <div className="flex items-center rounded-lg bg-white dark:bg-gray-700">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
