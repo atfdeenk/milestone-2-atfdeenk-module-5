@@ -139,29 +139,51 @@ const AdminDashboard = () => {
     
     const adminToken = localStorage.getItem('adminToken');
     if (!adminToken) {
+      setError('Admin token not found. Please log in again.');
       router.push('/admin/login');
       return;
     }
 
-    // Validate category
-    if (!formData.categoryId) {
-      setError('Please select a category');
-      return;
-    }
-
-    // Ensure category exists
-    const selectedCategory = categories.find(c => c.id.toString() === formData.categoryId);
-    if (!selectedCategory) {
-      setError('Selected category not found');
-      return;
-    }
-
+    // Verify admin token
     try {
+      const verifyResponse = await fetch('https://api.escuelajs.co/api/v1/auth/profile', {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+
+      if (!verifyResponse.ok) {
+        setError('Admin session expired. Please log in again.');
+        removeAuthToken('admin');
+        router.push('/admin/login');
+        return;
+      }
+
+      const userData = await verifyResponse.json();
+      if (userData.role !== 'admin') {
+        setError('Unauthorized. Admin access required.');
+        removeAuthToken('admin');
+        router.push('/admin/login');
+        return;
+      }
+
+      // Validate category
+      if (!formData.categoryId) {
+        setError('Please select a category');
+        return;
+      }
+
+      // Ensure category exists
+      const selectedCategory = categories.find(c => c.id.toString() === formData.categoryId);
+      if (!selectedCategory) {
+        setError('Selected category not found');
+        return;
+      }
+
       // Filter out empty image URLs and clean the URLs
       const validImages = formData.images
         .filter(img => img.trim() !== '')
-        .map(img => img.trim())
-        .map(img => `["${img.replace(/[\[\]"]/g, '')}"]`);  // Format for API
+        .map(img => img.trim());
       
       // Ensure there's at least one image URL
       if (validImages.length === 0) {
@@ -173,10 +195,8 @@ const AdminDashboard = () => {
         ? `https://api.escuelajs.co/api/v1/products/${editingProduct.id}`
         : 'https://api.escuelajs.co/api/v1/products';
 
-      const method = editingProduct ? 'PUT' : 'POST';
-
-      // For new products, we need to create it first
       if (!editingProduct) {
+        // Create new product
         const createResponse = await fetch(url, {
           method: 'POST',
           headers: {
@@ -196,30 +216,26 @@ const AdminDashboard = () => {
           const errorData = await createResponse.json();
           throw new Error(errorData.message || 'Failed to create product');
         }
+      } else {
+        // Update existing product
+        const updateResponse = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            price: Number(formData.price),
+            description: formData.description,
+            categoryId: Number(formData.categoryId),
+            images: validImages
+          })
+        });
 
-        const newProduct = await createResponse.json();
-
-        // If it's an update, just send the update request
-        if (method === 'PUT') {
-          const updateResponse = await fetch(url, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${adminToken}`,
-            },
-            body: JSON.stringify({
-              title: formData.title,
-              price: Number(formData.price),
-              description: formData.description,
-              categoryId: Number(formData.categoryId),
-              images: validImages
-            })
-          });
-
-          if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            throw new Error(errorData.message || 'Failed to update product');
-          }
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json();
+          throw new Error(errorData.message || 'Failed to update product');
         }
       }
 
@@ -233,9 +249,10 @@ const AdminDashboard = () => {
         categoryId: '',
         images: ['']
       });
-      setError(''); // Clear any existing errors
+      setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save product');
+      console.error('Error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to process request');
     }
   };
 
