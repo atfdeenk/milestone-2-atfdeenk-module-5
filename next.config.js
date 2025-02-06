@@ -12,7 +12,9 @@ const nextConfig = {
       'i.ebayimg.com',
       'shorturl.at',
       'www.kapowtoys.es',
-      'i.pinimg.com'
+      'i.pinimg.com',
+      'images.tokopedia.net',
+      'images.unsplash.com'
     ],
   },
 }
