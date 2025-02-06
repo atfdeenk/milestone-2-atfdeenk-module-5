@@ -148,38 +148,7 @@ export default function Cart() {
       return;
     }
 
-    const selectedItems = cart.filter(item => item.selected);
-    if (selectedItems.length === 0) {
-      setNotificationType('error');
-      setNotificationMessage('Please select at least one item to checkout');
-      setShowNotification(true);
-      return;
-    }
-
-    const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const discountAmount = (subtotal * discountPercentage) / 100;
-    const totalPrice = subtotal - discountAmount;
-
-    const orderData = {
-      items: selectedItems.map(item => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        quantity: item.quantity
-      })),
-      subtotal,
-      discountPercentage,
-      discountAmount,
-      totalPrice,
-      orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      orderDate: new Date().toLocaleString()
-    };
-
-    // Store pending order data
-    localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-
-    // Navigate to checkout page
-    router.push('/checkout');
+    setShowCheckoutConfirm(true);
   };
 
   const handleContinueShopping = async () => {
@@ -509,6 +478,20 @@ export default function Cart() {
             </div>
           </div>
 
+          {/* Mobile Continue Shopping Button */}
+          <div className="md:hidden mt-6">
+            <button
+              onClick={handleContinueShopping}
+              disabled={loading}
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Continue Shopping
+            </button>
+          </div>
+
           {/* Mobile Order Summary */}
           <div className="md:hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mt-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
@@ -535,16 +518,28 @@ export default function Cart() {
               </div>
               <DiscountCode onApplyDiscount={setDiscountPercentage} />
             </div>
-            <button
-              onClick={handleCheckout}
-              disabled={loading || cart.filter(item => item.selected).length === 0}
-              className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
-              Proceed to Checkout
-            </button>
+            <div className="flex flex-col gap-3 mt-6">
+              <button
+                onClick={handleCheckout}
+                disabled={loading || cart.filter(item => item.selected).length === 0}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+                Proceed to Checkout
+              </button>
+              <button
+                onClick={handleContinueShopping}
+                disabled={loading}
+                className="w-full px-6 py-3 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+                Continue Shopping
+              </button>
+            </div>
           </div>
         </div>
 
@@ -598,16 +593,28 @@ export default function Cart() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Free shipping on all orders</p>
               <DiscountCode onApplyDiscount={setDiscountPercentage} />
             </div>
-            <button
-              onClick={handleCheckout}
-              disabled={loading || cart.filter(item => item.selected).length === 0}
-              className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
-              Proceed to Checkout
-            </button>
+            <div className="flex flex-col gap-3 mt-6">
+              <button
+                onClick={handleCheckout}
+                disabled={loading || cart.filter(item => item.selected).length === 0}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+                Proceed to Checkout
+              </button>
+              <button
+                onClick={handleContinueShopping}
+                disabled={loading}
+                className="w-full px-6 py-3 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+                Continue Shopping
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState, RefObject } from 'react';
+import { useState, RefObject, useCallback } from 'react';
 import { Message } from './types';
 
 interface ChatWindowProps {
@@ -19,6 +19,18 @@ export default function ChatWindow({
   messagesEndRef,
 }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
+
+  const commonQuestions = [
+    'How long does shipping take?',
+    'What is your return policy?',
+    'What payment methods do you accept?',
+    'How can I track my order?',
+    'Do you have a size guide?',
+    'Are there any ongoing sales?',
+    'Do you offer international shipping?',
+    'How do I change my order?',
+    'What is your warranty policy?'
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +93,28 @@ export default function ChatWindow({
           </div>
         )}
         <div ref={messagesEndRef} />
+      </div>
+
+      {/* Common Questions */}
+      <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Common Questions:</p>
+        <div className="relative">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent pb-2">
+            <div className="flex gap-2 min-w-max px-1">
+              {commonQuestions.map((question, index) => (
+                <button
+                  key={index}
+                  onClick={() => onSendMessage(question)}
+                  className="text-sm whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 flex-none"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-gray-50 dark:from-gray-800 w-6 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 bg-gradient-to-l from-gray-50 dark:from-gray-800 w-6 pointer-events-none"></div>
+        </div>
       </div>
 
       {/* Input */}

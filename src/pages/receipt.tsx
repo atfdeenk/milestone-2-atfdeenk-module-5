@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface ReceiptItem {
   id: number;
@@ -142,12 +143,7 @@ export default function Receipt() {
   };
 
   if (isLoading || isNavigating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <p className="text-gray-600 dark:text-gray-300 mt-4">{isNavigating ? "Loading page..." : "Loading receipt..."}</p>
-      </div>
-    );
+    return <LoadingSpinner message={isNavigating ? "Loading page..." : "Loading receipt..."} />;
   }
 
   if (!receiptData) {
