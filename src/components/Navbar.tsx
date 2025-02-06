@@ -11,6 +11,7 @@ const Navbar = () => {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,10 +19,12 @@ const Navbar = () => {
   const fetchProfile = useCallback(async () => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
+      const adminToken = localStorage.getItem('adminToken');
       const storedUserName = localStorage.getItem('userName');
       const storedEmail = localStorage.getItem('userEmail');
       
       setIsLoggedIn(!!token);
+      setIsAdmin(!!adminToken);
       if (storedUserName) {
         setUserName(storedUserName);
       }
@@ -101,6 +104,7 @@ const Navbar = () => {
     removeAuthToken();
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('adminToken');
     router.push('/login');
   };
 
@@ -144,6 +148,16 @@ const Navbar = () => {
                   <BsMoonStarsFill className="h-6 w-6 text-blue-500" />
                 )}
               </button>
+              {/* Admin Dashboard Link */}
+              {isAdmin && (
+                <Link
+                  href="/admin/dashboard"
+                  className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
+                >
+                  Admin
+                </Link>
+              )}
+
               {/* Cart and Profile buttons */}
 
               <Link

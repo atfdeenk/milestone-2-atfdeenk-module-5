@@ -1,8 +1,9 @@
 import type { NextPage } from 'next';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Logo from '../components/Logo';
+import { FaQuestionCircle } from 'react-icons/fa';
 
 const Login: NextPage = () => {
   const router = useRouter();
@@ -11,6 +12,8 @@ const Login: NextPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginType, setLoginType] = useState<'user' | 'admin'>('user');
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -27,6 +30,7 @@ const Login: NextPage = () => {
     setIsLoading(true);
 
     try {
+      // Same API endpoint for both user and admin
       const response = await fetch('https://api.escuelajs.co/api/v1/auth/login', {
         method: 'POST',
         headers: {
@@ -48,9 +52,14 @@ const Login: NextPage = () => {
         throw new Error('No access token received');
       }
 
-      // Store token in both localStorage and cookies
-      localStorage.setItem('token', data.access_token);
-      document.cookie = `token=${data.access_token}; path=/; max-age=86400; samesite=strict`;
+      // Store token based on login type
+      if (loginType === 'admin') {
+        localStorage.setItem('adminToken', data.access_token);
+        document.cookie = `adminToken=${data.access_token}; path=/; max-age=86400; samesite=strict`;
+      } else {
+        localStorage.setItem('token', data.access_token);
+        document.cookie = `token=${data.access_token}; path=/; max-age=86400; samesite=strict`;
+      }
 
       // Fetch user profile
       const profileResponse = await fetch('https://api.escuelajs.co/api/v1/auth/profile', {
@@ -72,10 +81,14 @@ const Login: NextPage = () => {
           window.dispatchEvent(new Event('cartUpdated'));
         }
 
-        // Show success message and redirect
+        // Show success message and redirect based on login type
         setSuccess('Sign in successful! Redirecting...');
         setTimeout(() => {
-          router.push('/products');
+          if (loginType === 'admin') {
+            router.push('/admin/dashboard');
+          } else {
+            router.push('/products');
+          }
         }, 1500); // Redirect after 1.5 seconds
       }
     } catch (err) {
@@ -109,8 +122,57 @@ const Login: NextPage = () => {
                 Welcome Back!
               </h2>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Sign in to your account to continue shopping
+                {loginType === 'admin' 
+                  ? 'Sign in to access the admin dashboard'
+                  : 'Sign in to your account to continue shopping'}
               </p>
+            </div>
+
+            {/* Login Type Selector */}
+            <div className="px-6 sm:px-8 pb-4">
+              <div className="flex justify-center space-x-4 relative">
+                <button
+                  type="button"
+                  onClick={() => setLoginType('user')}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${loginType === 'user' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                >
+                  User Login
+                </button>
+                <div className="relative inline-block">
+                  <button
+                    type="button"
+                    onClick={() => setLoginType('admin')}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${loginType === 'admin' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                  >
+                    Admin Login
+                  </button>
+                  {loginType === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => setShowHelp(!showHelp)}
+                      className="absolute -right-8 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200"
+                      aria-label="Show admin credentials"
+                    >
+                      <FaQuestionCircle className="w-4 h-4" />
+                    </button>
+                  )}
+                  {showHelp && loginType === 'admin' && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
+                      <div className="text-sm">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Admin Credentials</h3>
+                        <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                          <p><span className="font-medium">Email:</span> admin@mail.com</p>
+                          <p><span className="font-medium">Password:</span> admin123</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Form Section */}
