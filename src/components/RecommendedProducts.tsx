@@ -3,38 +3,38 @@ import Image from 'next/image';
 
 const recommendedProducts = [
   {
-    id: 1,
-    name: "Premium Cotton T-Shirt",
-    price: 29.99,
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
-    category: "Men's Fashion",
+    id: 108,
+    name: "New Product Course",
+    price: 999,
+    image: "https://i.imgur.com/ZANVnHE.jpeg",
+    category: "Electronics",
     rating: 4.8,
     reviews: 128
   },
   {
-    id: 2,
-    name: "Designer Handbag",
-    price: 89.99,
-    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3",
-    category: "Accessories",
+    id: 103,
+    name: "Modern Furniture Set",
+    price: 499,
+    image: "https://i.imgur.com/Qphac99.jpeg",
+    category: "Furniture",
     rating: 4.9,
     reviews: 256
   },
   {
-    id: 3,
-    name: "Running Shoes",
+    id: 104,
+    name: "Casual Sneakers",
     price: 119.99,
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+    image: "https://i.imgur.com/qNOjJje.jpeg",
     category: "Shoes",
     rating: 4.7,
     reviews: 189
   },
   {
-    id: 4,
-    name: "Summer Dress",
-    price: 59.99,
-    image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c",
-    category: "Women's Fashion",
+    id: 107,
+    name: "Premium Collection",
+    price: 123,
+    image: "https://i.imgur.com/QkIa5tT.jpeg",
+    category: "Clothes",
     rating: 4.6,
     reviews: 143
   }

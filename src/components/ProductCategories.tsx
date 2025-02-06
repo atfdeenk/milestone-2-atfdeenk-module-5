@@ -4,45 +4,45 @@ import Image from 'next/image';
 const categories = [
   {
     id: 1,
-    name: "Men's Fashion",
-    image: "https://images.unsplash.com/photo-1516257984-b1b4d707412e",
-    slug: "mens-fashion",
-    itemCount: "2,000+ items"
+    name: "Clothes",
+    image: "https://i.imgur.com/QkIa5tT.jpeg",
+    slug: "clothes",
+    itemCount: "500+ items"
   },
   {
     id: 2,
-    name: "Women's Fashion",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
-    slug: "womens-fashion",
-    itemCount: "3,500+ items"
+    name: "Electronics",
+    image: "https://i.imgur.com/ZANVnHE.jpeg",
+    slug: "electronics",
+    itemCount: "300+ items"
   },
   {
     id: 3,
-    name: "Accessories",
-    image: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49",
-    slug: "accessories",
-    itemCount: "1,500+ items"
+    name: "Furniture",
+    image: "https://i.imgur.com/Qphac99.jpeg",
+    slug: "furniture",
+    itemCount: "200+ items"
   },
   {
     id: 4,
     name: "Shoes",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+    image: "https://i.imgur.com/qNOjJje.jpeg",
     slug: "shoes",
-    itemCount: "1,000+ items"
+    itemCount: "150+ items"
   },
   {
     id: 5,
-    name: "Sports & Active Wear",
-    image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
-    slug: "sports-active-wear",
-    itemCount: "800+ items"
+    name: "Miscellaneous",
+    image: "https://i.imgur.com/BG8J0Fj.jpg",
+    slug: "miscellaneous",
+    itemCount: "100+ items"
   },
   {
-    id: 6,
-    name: "Beauty & Care",
-    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348",
-    slug: "beauty-care",
-    itemCount: "1,200+ items"
+    id: 10,
+    name: "Books",
+    image: "https://api.lorem.space/image/book?w=150&h=220",
+    slug: "books",
+    itemCount: "50+ items"
   }
 ];
 
