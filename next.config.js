@@ -21,6 +21,9 @@ const nextConfig = {
       'example.com',
       'api.escuelajs.co',
       'img.lazcdn.com',
+      'i5.walmartimages.com',
+      'www.thekooples.com',
+      'cdn.shopify.com',
     ],
   },
 }
