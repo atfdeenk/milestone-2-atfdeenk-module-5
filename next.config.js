@@ -14,7 +14,9 @@ const nextConfig = {
       'www.kapowtoys.es',
       'i.pinimg.com',
       'images.tokopedia.net',
-      'images.unsplash.com'
+      'images.unsplash.com',
+      'placeimg.com',
+      'fakestoreapi.com'
     ],
   },
 }
