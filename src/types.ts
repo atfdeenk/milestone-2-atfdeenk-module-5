@@ -19,6 +19,7 @@ export interface Category {
 
 export interface CartItem extends Product {
   quantity: number;
+  selected: boolean;
 }
 
 export interface User {

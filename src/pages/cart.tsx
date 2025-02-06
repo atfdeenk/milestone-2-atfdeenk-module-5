@@ -97,14 +97,20 @@ export default function Cart() {
 
   const updateCart = (newCart: CartItem[]) => {
     try {
-      setCart(newCart);
+      // Ensure all items have a selected property
+      const cartWithSelection = newCart.map(item => ({
+        ...item,
+        selected: item.selected !== undefined ? item.selected : false
+      }));
+
+      setCart(cartWithSelection);
       
       // Always update both storage locations
-      localStorage.setItem('cart', JSON.stringify(newCart));
+      localStorage.setItem('cart', JSON.stringify(cartWithSelection));
       
       const userEmail = localStorage.getItem('userEmail');
       if (userEmail) {
-        localStorage.setItem(`cart_${userEmail}`, JSON.stringify(newCart));
+        localStorage.setItem(`cart_${userEmail}`, JSON.stringify(cartWithSelection));
       }
       
       // Notify other components
@@ -156,17 +162,28 @@ export default function Cart() {
   const processCheckout = () => {
     setLoading(true);
     try {
+      const selectedItems = cart.filter(item => item.selected);
+      const unselectedItems = cart.filter(item => !item.selected);
+      
+      if (selectedItems.length === 0) {
+        setNotificationType('error');
+        setNotificationMessage('Please select at least one item to checkout');
+        setShowNotification(true);
+        setLoading(false);
+        return;
+      }
+
       const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const orderDate = new Date().toLocaleString();
 
       const receiptData = {
-        items: cart.map(item => ({
+        items: selectedItems.map(item => ({
           id: item.id,
           title: item.title,
           price: item.price,
           quantity: item.quantity
         })),
-        totalPrice: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+        totalPrice: selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
         orderDate,
         orderNumber
       };
@@ -183,22 +200,22 @@ export default function Cart() {
       // Store receipt data in localStorage for immediate access
       localStorage.setItem('lastReceipt', JSON.stringify(receiptData));
 
-      // Store cart data temporarily for clearing after navigation
-      localStorage.setItem('pendingClearCart', 'true');
+      // Only remove selected items from cart, keep unselected items
+      updateCart(unselectedItems);
+      setShowCheckoutConfirm(false);
+
+      // Show success message
+      setNotificationType('success');
+      setNotificationMessage(`Successfully checked out ${selectedItems.length} item${selectedItems.length > 1 ? 's' : ''}`);
+      setShowNotification(true);
 
       // Navigate to receipt page
       handleNavigateToReceipt();
-      
-      // Clear the cart after navigation
-      updateCart([]);
-      setShowCheckoutConfirm(false);
-      localStorage.removeItem('pendingClearCart');
     } catch (error) {
       console.error('Error processing checkout:', error);
       setNotificationType('error');
       setNotificationMessage('Error processing checkout');
       setShowNotification(true);
-      localStorage.removeItem('pendingClearCart');
     } finally {
       setLoading(false);
     }
@@ -234,7 +251,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       {showNotification && (
         <Notification
           message={notificationMessage}
@@ -248,16 +265,40 @@ export default function Cart() {
           message={isNavigating ? "Loading page..." : "Processing..."} 
         />
       )}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Shopping Cart</h1>
-        <button
-          onClick={() => setShowClearConfirm(true)}
-          disabled={loading}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50"
-        >
-          Clear Cart
-        </button>
-      </div>
+      <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+        {/* Main Cart Content */}
+        <div className="flex-grow w-full md:w-2/3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Shopping Cart</h1>
+                <span className="text-sm text-gray-500 dark:text-gray-400">({cart.length} items)</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cart.length > 0 && cart.every(item => item.selected)}
+                    onChange={(e) => {
+                      const newCart = cart.map(item => ({
+                        ...item,
+                        selected: e.target.checked
+                      }));
+                      updateCart(newCart);
+                    }}
+                    className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Select All</span>
+                </label>
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  disabled={loading || cart.length === 0}
+                  className="text-sm text-red-500 hover:text-red-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Clear Cart
+                </button>
+              </div>
+            </div>
 
       {showClearConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -290,17 +331,17 @@ export default function Cart() {
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-2xl">
             <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Confirm Purchase</h3>
             <div className="space-y-4 mb-6">
-              <p className="text-gray-600 dark:text-gray-400">You are about to purchase {cart.reduce((sum, item) => sum + item.quantity, 0)} items:</p>
+              <p className="text-gray-600 dark:text-gray-400">You are about to purchase {cart.filter(item => item.selected).reduce((sum, item) => sum + item.quantity, 0)} items:</p>
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
-                {cart.map(item => (
+                {cart.filter(item => item.selected).map(item => (
                   <div key={item.id} className="flex justify-between items-center text-sm text-gray-800 dark:text-gray-200">
                     <span>{item.title} × {item.quantity}</span>
                     <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="border-t border-gray-200 dark:border-gray-600 pt-2 mt-2 flex justify-between items-center font-semibold text-gray-900 dark:text-white">
-                  <span>Total</span>
-                  <span className="text-blue-500 dark:text-blue-400">${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+                  <span>Total ({cart.filter(item => item.selected).length} items)</span>
+                  <span className="text-blue-500 dark:text-blue-400">${cart.filter(item => item.selected).reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
                 </div>
               </div>
               <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -338,106 +379,154 @@ export default function Cart() {
         </div>
       )}
 
-      <div className="grid gap-6">
-        {cart.map((item) => (
-          <div
-            key={item.id}
-            className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
-          >
-            <img
-              src={(item.images && Array.isArray(item.images) && item.images.length > 0) ? item.images[0] : 'https://i.imgur.com/QkIa5tT.jpeg'}
-              alt={item.title}
-              className="w-24 h-24 object-cover rounded"
-            />
-            
-            <div className="flex-grow">
-              <h3 className="font-semibold mb-1 text-gray-900 dark:text-white">{item.title}</h3>
-              <div className="text-blue-600 dark:text-blue-400 font-medium">${item.price.toFixed(2)} each</div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                disabled={loading || item.quantity <= 1}
-                className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                -
-              </button>
-              <input
-                type="number"
-                min="1"
-                max="99"
-                value={item.quantity}
-                onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                className="w-16 text-center border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                disabled={loading || item.quantity >= 99}
-                className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                +
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                ${(item.price * item.quantity).toFixed(2)}
-              </div>
-              <button
-                onClick={() => handleRemoveItem(item.id)}
-                disabled={loading}
-                className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {cart.map((item) => (
+                <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-6">
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      checked={item.selected}
+                      onChange={(e) => {
+                        const newCart = cart.map(cartItem =>
+                          cartItem.id === item.id
+                            ? { ...cartItem, selected: e.target.checked }
+                            : cartItem
+                        );
+                        updateCart(newCart);
+                      }}
+                      className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    />
+                    <div className="relative w-24 h-24 flex-shrink-0">
+                      <img
+                        src={(item.images && Array.isArray(item.images) && item.images.length > 0) ? item.images[0] : 'https://i.imgur.com/QkIa5tT.jpeg'}
+                        alt={item.title}
+                        className="w-full h-full object-cover rounded-lg shadow-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-grow min-w-0 sm:ml-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                      <div>
+                        <h3 className="font-medium text-gray-900 dark:text-white text-lg mb-1">{item.title}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Unit Price: ${item.price.toFixed(2)}</p>
+                      </div>
+                      <div className="flex items-center gap-4 mt-2 sm:mt-0">
+                        <div className="flex items-center bg-gray-50 dark:bg-gray-700 rounded-lg p-1">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            disabled={loading || item.quantity <= 1}
+                            className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                            </svg>
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            max="99"
+                            value={item.quantity}
+                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
+                            className="w-12 text-center bg-transparent border-none text-gray-900 dark:text-white focus:outline-none focus:ring-0"
+                          />
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            disabled={loading || item.quantity >= 99}
+                            className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="text-lg font-medium text-blue-600 dark:text-blue-400">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </div>
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          disabled={loading}
+                          className="p-2 text-gray-400 hover:text-red-500 transition-colors duration-200 disabled:opacity-50"
+                          title="Remove item"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
 
-      <div className="mt-8 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-        <div className="flex justify-between items-center text-xl font-semibold mb-6">
-          <span className="text-gray-800 dark:text-gray-200">Total:</span>
-          <span className="text-gray-900 dark:text-white">${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+          {/* Mobile Order Summary */}
+          <div className="md:hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mt-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Selected Items ({cart.filter(item => item.selected).length})</span>
+                <span>${cart.filter(item => item.selected).reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Shipping</span>
+                <span>Free</span>
+              </div>
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between font-semibold text-gray-900 dark:text-white">
+                  <span>Total</span>
+                  <span>${cart.filter(item => item.selected).reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleCheckout}
+              disabled={loading || cart.filter(item => item.selected).length === 0}
+              className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+              Proceed to Checkout
+            </button>
+          </div>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link
-            href="/products"
-            onClick={(e) => {
-              e.preventDefault();
-              handleContinueShopping();
-            }}
-            className="flex-1 px-6 py-3 text-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-          >
-            Continue Shopping
-          </Link>
-          <button
-            onClick={handleCheckout}
-            disabled={loading}
-            className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isLoggedIn ? (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
-                <span>Proceed to Checkout</span>
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                <span>Login to Checkout</span>
-              </>
-            )}
-          </button>
+
+        {/* Desktop Order Summary */}
+        <div className="hidden md:block w-1/3 sticky top-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Selected Items ({cart.filter(item => item.selected).length})</span>
+                <span>${cart.filter(item => item.selected).reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Shipping</span>
+                <span>Free</span>
+              </div>
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between font-semibold text-gray-900 dark:text-white">
+                  <span>Total</span>
+                  <span>${cart.filter(item => item.selected).reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Free shipping on all orders</p>
+              </div>
+            </div>
+            <button
+              onClick={handleCheckout}
+              disabled={loading || cart.filter(item => item.selected).length === 0}
+              className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+              Proceed to Checkout
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}
