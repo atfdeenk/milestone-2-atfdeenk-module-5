@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FaTrash, FaShoppingCart } from 'react-icons/fa';
 import { CartItem } from '../types';
 
@@ -21,7 +22,7 @@ interface FavoriteProduct {
   id: number;
   title: string;
   price: number;
-  image: string;
+  images: string[];
 }
 
 const getTabButtonClass = (isActive: boolean) => {
@@ -237,12 +238,33 @@ export default function Profile() {
                       key={product.id}
                       className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                     >
-                      <div className="aspect-w-1 aspect-h-1 mb-4">
-                        <img
-                          src={product.image}
-                          alt={product.title}
-                          className="object-cover rounded-lg"
-                        />
+                      <div className="relative w-full h-48 mb-4">
+                        {(() => {
+                          let imageUrl = 'https://i.imgur.com/QkIa5tT.jpeg';
+                          try {
+                            // If images is a string array
+                            if (Array.isArray(product.images) && product.images.length > 0) {
+                              const firstImage = product.images[0];
+                              // If the first image is a stringified array/object
+                              if (typeof firstImage === 'string' && firstImage.startsWith('[')) {
+                                const parsed = JSON.parse(firstImage);
+                                imageUrl = Array.isArray(parsed) ? parsed[0] : parsed;
+                              } else {
+                                imageUrl = firstImage;
+                              }
+                            }
+                          } catch (e) {
+                            console.error('Error parsing image:', e);
+                          }
+                          return (
+                            <Image
+                              src={imageUrl}
+                              alt={product.title}
+                              fill
+                              className="object-cover rounded-lg"
+                            />
+                          );
+                        })()}
                       </div>
                       <h3 className="font-medium text-gray-900 dark:text-white mb-2">
                         {product.title}

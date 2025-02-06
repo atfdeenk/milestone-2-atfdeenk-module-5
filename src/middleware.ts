@@ -4,7 +4,13 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   // Check if the requested page is an auth page (login/register)
   const isAuthPage = request.nextUrl.pathname === '/login' || 
-                    request.nextUrl.pathname === '/register';
+                    request.nextUrl.pathname === '/register' ||
+                    request.nextUrl.pathname === '/admin/login';
+
+  // Redirect /admin/login to /login
+  if (request.nextUrl.pathname === '/admin/login') {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
   
   // Check if the requested page is a protected route (cart and receipt)
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/cart') ||
@@ -28,7 +34,7 @@ export function middleware(request: NextRequest) {
 
   // If user is accessing admin route without admin token, redirect to login
   if (isAdminRoute && !adminToken) {
-    const response = NextResponse.redirect(new URL('/login', request.url));
+    const response = NextResponse.redirect(new URL('/admin/login', request.url));
     response.headers.set('Cache-Control', 'no-store');
     return response;
   }

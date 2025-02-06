@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Logo from '../components/Logo';
 import { FaQuestionCircle } from 'react-icons/fa';
+import { removeAuthToken } from '../utils/auth';
 
 const Login: NextPage = () => {
   const router = useRouter();
@@ -51,6 +52,9 @@ const Login: NextPage = () => {
       if (!data.access_token) {
         throw new Error('No access token received');
       }
+
+      // Clear all existing tokens first
+      removeAuthToken('all');
 
       // Store token based on login type
       if (loginType === 'admin') {

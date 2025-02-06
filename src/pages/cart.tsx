@@ -45,6 +45,15 @@ export default function Cart() {
 
         if (cartData) {
           const parsedCart = JSON.parse(cartData);
+          console.log('Cart data:', JSON.stringify(parsedCart, null, 2));
+          if (parsedCart.length > 0) {
+            console.log('First item images:', parsedCart[0].images);
+            console.log('First item images type:', typeof parsedCart[0].images);
+            if (Array.isArray(parsedCart[0].images)) {
+              console.log('First image in array:', parsedCart[0].images[0]);
+              console.log('First image type:', typeof parsedCart[0].images[0]);
+            }
+          }
           setCart(parsedCart);
         }
       } catch (error) {
@@ -414,11 +423,37 @@ export default function Cart() {
                       className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                     />
                     <div className="relative w-24 h-24 flex-shrink-0">
-                      <img
-                        src={(item.images && Array.isArray(item.images) && item.images.length > 0) ? item.images[0] : 'https://i.imgur.com/QkIa5tT.jpeg'}
-                        alt={item.title}
-                        className="w-full h-full object-cover rounded-lg shadow-sm"
-                      />
+                      {/* Debug output */}
+                      {console.log('Raw images:', item.images)}
+                      {console.log('First image:', item.images?.[0])}
+                      {console.log('Image type:', typeof item.images?.[0])}
+                      {(() => {
+                        let imageUrl = 'https://i.imgur.com/QkIa5tT.jpeg';
+                        if (Array.isArray(item.images) && item.images.length > 0) {
+                          const firstImage = item.images[0];
+                          try {
+                            // If it's a stringified array/object, parse it
+                            if (typeof firstImage === 'string' && (firstImage.startsWith('[') || firstImage.startsWith('{'))) {
+                              const parsed = JSON.parse(firstImage);
+                              imageUrl = Array.isArray(parsed) ? parsed[0] : parsed;
+                            } else {
+                              imageUrl = firstImage;
+                            }
+                          } catch (e) {
+                            console.error('Error parsing image:', e);
+                            imageUrl = 'https://i.imgur.com/QkIa5tT.jpeg';
+                          }
+                        }
+                        console.log('Final image URL:', imageUrl);
+                        return (
+                          <Image
+                            src={imageUrl}
+                            alt={item.title}
+                            fill
+                            className="object-cover rounded-lg shadow-sm"
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
                   

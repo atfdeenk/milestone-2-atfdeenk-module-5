@@ -16,7 +16,10 @@ const nextConfig = {
       'images.tokopedia.net',
       'images.unsplash.com',
       'placeimg.com',
-      'fakestoreapi.com'
+      'fakestoreapi.com',
+      'examples.com',
+      'example.com',
+      'api.escuelajs.co',
     ],
   },
 }

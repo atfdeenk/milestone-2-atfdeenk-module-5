@@ -13,16 +13,26 @@ export const setAuthToken = (token: string) => {
   }
 };
 
-export const removeAuthToken = () => {
+export const removeAuthToken = (type: 'user' | 'admin' | 'all' = 'all') => {
   if (typeof window !== 'undefined') {
-    // Remove from localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('cart');
-    
-    // Remove from cookies - set expired date and empty value
-    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=strict';
+    if (type === 'user' || type === 'all') {
+      // Remove user data from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('cart');
+      
+      // Remove user token from cookies
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=strict';
+    }
+
+    if (type === 'admin' || type === 'all') {
+      // Remove admin data from localStorage
+      localStorage.removeItem('adminToken');
+      
+      // Remove admin token from cookies
+      document.cookie = 'adminToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=strict';
+    }
   }
 };
 

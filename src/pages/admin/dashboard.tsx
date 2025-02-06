@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Product, Category } from '../../types';
+import { removeAuthToken } from '../../utils/auth';
 
 const AdminDashboard = () => {
   const router = useRouter();
@@ -180,6 +181,7 @@ const AdminDashboard = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`,
           },
           body: JSON.stringify({
             title: formData.title,
@@ -203,6 +205,7 @@ const AdminDashboard = () => {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${adminToken}`,
             },
             body: JSON.stringify({
               title: formData.title,
@@ -400,9 +403,8 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminEmail');
-    router.push('/admin/login');
+    removeAuthToken('admin');
+    router.push('/login');
   };
 
   if (loading) {
