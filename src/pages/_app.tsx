@@ -6,6 +6,7 @@ import DarkModeToggle from "../components/DarkModeToggle";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { getAuthToken } from "../utils/auth";
+import Footer from "../components/Footer";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -52,6 +53,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <main>
           <Component {...pageProps} />
         </main>
+        {!hideNavbarPaths.includes(router.pathname) && <Footer />}
       </div>
     </ThemeProvider>
   );
