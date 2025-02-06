@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Logo from '../components/Logo';
-import { FaQuestionCircle } from 'react-icons/fa';
+import { FaQuestionCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { removeAuthToken } from '../utils/auth';
 
 const Login: NextPage = () => {
@@ -15,6 +15,33 @@ const Login: NextPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginType, setLoginType] = useState<'user' | 'admin'>('user');
   const [showHelp, setShowHelp] = useState(false);
+  const [showUserHelp, setShowUserHelp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{ exists: boolean; message: string } | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  const [availableAccounts, setAvailableAccounts] = useState<Array<{ email: string; role: string; password: string }>>([]);
+
+  const fetchAvailableAccounts = async () => {
+    try {
+      const response = await fetch('https://api.escuelajs.co/api/v1/users');
+      const users = await response.json();
+      setAvailableAccounts(users.map((user: any) => ({
+        email: user.email,
+        role: user.role,
+        password: user.password || 'changeme'
+      })));
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch available accounts when help dialog opens
+    if (showUserHelp) {
+      fetchAvailableAccounts();
+    }
+  }, [showUserHelp]);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -24,11 +51,52 @@ const Login: NextPage = () => {
     }
   }, [router]);
 
+  const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout;
+
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  };
+
+  const verifyEmail = async (email: string) => {
+    try {
+      if (!email || !email.includes('@')) {
+        setEmailStatus(null);
+        return false;
+      }
+
+      setIsCheckingEmail(true);
+      const response = await fetch('https://api.escuelajs.co/api/v1/users');
+      const users = await response.json();
+      const exists = users.some((user: any) => user.email === email);
+      
+      setEmailStatus({
+        exists,
+        message: exists ? 'Email is registered' : 'Email not found. Please sign up.'
+      });
+      setIsCheckingEmail(false);
+      return exists;
+    } catch (error) {
+      console.error('Error verifying email:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     setIsLoading(true);
+
+    // Verify if email exists
+    const emailExists = await verifyEmail(email.trim());
+    if (!emailExists) {
+      setError('Email not registered. Please check your email or sign up.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Same API endpoint for both user and admin
@@ -154,7 +222,7 @@ const Login: NextPage = () => {
                   >
                     Admin Login
                   </button>
-                  {loginType === 'admin' && (
+                  {/* {loginType === 'admin' && (
                     <button
                       type="button"
                       onClick={() => setShowHelp(!showHelp)}
@@ -174,7 +242,7 @@ const Login: NextPage = () => {
                         </div>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
@@ -224,10 +292,24 @@ const Login: NextPage = () => {
                       autoComplete="email"
                       required
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        const newEmail = e.target.value;
+                        setEmail(newEmail);
+                        debounce(() => verifyEmail(newEmail), 500)();
+                      }}
                       className="appearance-none block w-full px-3 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 text-sm sm:text-base"
                       placeholder="Enter your email"
                     />
+                    {isCheckingEmail && (
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Checking email...
+                      </p>
+                    )}
+                    {emailStatus && !isCheckingEmail && (
+                      <p className={`mt-1 text-sm ${emailStatus.exists ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {emailStatus.message}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -235,18 +317,29 @@ const Login: NextPage = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-1 relative">
                     <input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       autoComplete="current-password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="appearance-none block w-full px-3 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 text-sm sm:text-base"
+                      className="appearance-none block w-full px-3 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 text-sm sm:text-base pr-10"
                       placeholder="Enter your password"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash className="h-5 w-5" />
+                      ) : (
+                        <FaEye className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
@@ -272,17 +365,90 @@ const Login: NextPage = () => {
                   </button>
                 </div>
 
-                <div className="text-sm text-center">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Don't have an account?{' '}
-                  </span>
-                  <Link 
-                    href="/register" 
-                    className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                <div className="flex justify-between items-center text-sm">
+                  <div>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Don't have an account?{' '}
+                    </span>
+                    <Link 
+                      href="/register" 
+                      className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Sign up here
+                    </Link>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowUserHelp(true)}
+                    className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
                   >
-                    Sign up here
-                  </Link>
+                    <FaQuestionCircle className="h-4 w-4 mr-1" />
+                    <span>Help</span>
+                  </button>
                 </div>
+
+                {/* User Help Dialog */}
+                {showUserHelp && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Available Accounts</h3>
+                        <button
+                          onClick={() => setShowUserHelp(false)}
+                          className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        >
+                          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="space-y-4">
+                        {/* Admin Section */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Admin Accounts</h4>
+                          <div className="space-y-2">
+                            {availableAccounts
+                              .filter(account => account.role === 'admin')
+                              .slice(0, 3)
+                              .map((account, index) => (
+                                <div key={index} className="p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                                  <div className="text-gray-900 dark:text-white truncate">{account.email}</div>
+                                  <div className="text-gray-500 dark:text-gray-400 font-mono mt-1">
+                                    Password: {account.password}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                        {/* Customer Section */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Customer Accounts</h4>
+                          <div className="space-y-2">
+                            {availableAccounts
+                              .filter(account => account.role === 'customer')
+                              .slice(0, 3)
+                              .map((account, index) => (
+                                <div key={index} className="p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                                  <div className="text-gray-900 dark:text-white truncate">{account.email}</div>
+                                  <div className="text-gray-500 dark:text-gray-400 font-mono mt-1">
+                                    Password: {account.password}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={() => setShowUserHelp(false)}
+                          className="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </form>
             </div>
           </div>

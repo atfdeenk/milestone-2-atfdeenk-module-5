@@ -423,10 +423,7 @@ export default function Cart() {
                       className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                     />
                     <div className="relative w-24 h-24 flex-shrink-0">
-                      {/* Debug output */}
-                      {console.log('Raw images:', item.images)}
-                      {console.log('First image:', item.images?.[0])}
-                      {console.log('Image type:', typeof item.images?.[0])}
+                      {/* Image container */}
                       {(() => {
                         let imageUrl = 'https://i.imgur.com/QkIa5tT.jpeg';
                         if (Array.isArray(item.images) && item.images.length > 0) {
