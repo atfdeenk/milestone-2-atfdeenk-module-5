@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import LoadingSpinner from "../components/LoadingSpinner";
 import SEO from "../components/SEO";
+import ProductCategories from "../components/ProductCategories";
+import RecommendedProducts from "../components/RecommendedProducts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -168,6 +170,12 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Categories Section */}
+        <ProductCategories />
+
+        {/* Recommended Products Section */}
+        <RecommendedProducts />
 
         {/* Features Section */}
         <div className="relative py-16 sm:py-24 lg:py-32 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
