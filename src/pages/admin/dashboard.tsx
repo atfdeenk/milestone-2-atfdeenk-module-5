@@ -91,6 +91,47 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteCategories = async (categoryIds: number[]) => {
+    if (!window.confirm(`Are you sure you want to delete ${categoryIds.length} category(s)?`)) {
+      return;
+    }
+
+    setIsDeletingCategories(true);
+    setError('');
+
+    try {
+      const deletePromises = categoryIds.map(id =>
+        fetch(`https://api.escuelajs.co/api/v1/categories/${id}`, {
+          method: 'DELETE'
+        })
+      );
+
+      const results = await Promise.allSettled(deletePromises);
+      const failedDeletes = results.filter(result => result.status === 'rejected');
+
+      if (failedDeletes.length > 0) {
+        setError(`Failed to delete ${failedDeletes.length} category(s)`);
+      }
+
+      await fetchCategories(); // Refresh the categories list
+      await fetchProducts(); // Refresh products as some might be affected
+      setSelectedCategories([]); // Clear selection after successful deletion
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete categories');
+    } finally {
+      setIsDeletingCategories(false);
+    }
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setCategoryFormData({
+      name: category.name,
+      image: Array.isArray(category.image) ? category.image[0] : category.image
+    });
+    setShowCategoryForm(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -241,45 +282,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteCategories = async (categoryIds: number[]) => {
-    if (!window.confirm(`Are you sure you want to delete ${categoryIds.length} category(s)? This will also affect all products in these categories.`)) return;
-
-    const adminToken = localStorage.getItem('adminToken');
-    if (!adminToken) {
-      router.push('/admin/login');
-      return;
-    }
-
-    setIsDeletingCategories(true);
-    setError('');
-
-    try {
-      const deletePromises = categoryIds.map(id =>
-        fetch(`https://api.escuelajs.co/api/v1/categories/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${adminToken}`
-          }
-        })
-      );
-
-      const results = await Promise.allSettled(deletePromises);
-      const failedDeletes = results.filter(result => result.status === 'rejected');
-
-      if (failedDeletes.length > 0) {
-        setError(`Failed to delete ${failedDeletes.length} category(s)`);
-      }
-
-      setSelectedCategories([]);
-      fetchCategories();
-      fetchProducts(); // Refresh products as some might be affected
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete categories');
-    } finally {
-      setIsDeletingCategories(false);
-    }
-  };
-
   const handleSelectAllCategories = (checked: boolean) => {
     if (checked) {
       setSelectedCategories(categories.map(c => c.id));
@@ -294,15 +296,6 @@ const AdminDashboard = () => {
     } else {
       setSelectedCategories(prev => prev.filter(id => id !== categoryId));
     }
-  };
-
-  const handleEditCategory = (category: Category) => {
-    setEditingCategory(category);
-    setCategoryFormData({
-      name: category.name,
-      image: category.image
-    });
-    setShowCategoryForm(true);
   };
 
   const handleSaveCategory = async (e: React.FormEvent) => {
@@ -458,6 +451,158 @@ const AdminDashboard = () => {
             </div>
           )}
 
+          {/* Categories Section */}
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mb-6">
+            <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                  Categories
+                </h3>
+                {selectedCategories.length > 0 && (
+                  <button
+                    onClick={() => handleDeleteCategories(selectedCategories)}
+                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                    disabled={isDeletingCategories}
+                  >
+                    {isDeletingCategories ? 'Deleting...' : `Delete (${selectedCategories.length})`}
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.length === categories.length}
+                    onChange={(e) => handleSelectAllCategories(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                    Select All
+                  </label>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingCategory(null);
+                    setCategoryFormData({
+                      name: '',
+                      image: ''
+                    });
+                    setShowCategoryForm(true);
+                  }}
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Add Category
+                </button>
+              </div>
+            </div>
+
+            <div className="px-4 py-5 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {categories.map((category) => (
+                  <div key={category.id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg relative group">
+                    <div className="absolute top-2 left-2 z-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(category.id)}
+                        onChange={(e) => handleSelectCategory(category.id, e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </div>
+                    <img
+                      src={Array.isArray(category.image) ? category.image[0] : category.image}
+                      alt={category.name}
+                      className="w-full h-40 object-cover rounded-md mb-2"
+                    />
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{category.name}</h4>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => handleEditCategory(category)}
+                        className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Category Form Modal */}
+          {showCategoryForm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md">
+                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                      {editingCategory ? 'Edit Category' : 'Add New Category'}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowCategoryForm(false);
+                        setEditingCategory(null);
+                      }}
+                      className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                    >
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <form onSubmit={handleSaveCategory} className="px-4 py-5 sm:p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        value={categoryFormData.name}
+                        onChange={(e) => setCategoryFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="image" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Image URL
+                      </label>
+                      <input
+                        type="text"
+                        id="image"
+                        value={categoryFormData.image}
+                        onChange={(e) => setCategoryFormData(prev => ({ ...prev, image: e.target.value }))}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-5 flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCategoryForm(false);
+                        setEditingCategory(null);
+                      }}
+                      className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      {editingCategory ? 'Update' : 'Create'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Products Section */}
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
               <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
