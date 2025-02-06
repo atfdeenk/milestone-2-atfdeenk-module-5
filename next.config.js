@@ -8,7 +8,11 @@ const nextConfig = {
       'ui-avatars.com',
       'images.unsplash.com',
       'api.lorem.space',
-      'encrypted-tbn0.gstatic.com'
+      'encrypted-tbn0.gstatic.com',
+      'i.ebayimg.com',
+      'shorturl.at',
+      'www.kapowtoys.es',
+      'i.pinimg.com'
     ],
   },
 }
