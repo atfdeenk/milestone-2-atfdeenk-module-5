@@ -20,6 +20,7 @@ const nextConfig = {
       'examples.com',
       'example.com',
       'api.escuelajs.co',
+      'img.lazcdn.com',
     ],
   },
 }
