@@ -109,13 +109,21 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(product.title)}&background=random&size=200`;
     }
 
-    // Find the first valid image URL
-    const validImage = product.images.find(isValidImageUrl);
-    if (validImage) {
-      return validImage;
+    try {
+      const imageUrl = product.images[0];
+      if (typeof imageUrl === 'string') {
+        // Handle double-wrapped JSON string
+        if (imageUrl.startsWith('["') && imageUrl.endsWith('"]')) {
+          return JSON.parse(imageUrl)[0];
+        }
+        // Handle single-wrapped or plain URL
+        return imageUrl.replace(/[\[\]"]/g, '');
+      }
+    } catch (e) {
+      console.error('Error parsing image URL:', e);
     }
 
-    // If no valid images found, return a fallback
+    // If no valid images found or error parsing, return a fallback
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(product.title)}&background=random&size=200`;
   };
 
