@@ -7,6 +7,8 @@ import { Product } from '../../types';
 import Notification from '../../components/Notification';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import Rating from '../../components/Rating';
+import { generateRandomRating } from '../../utils/rating';
 
 interface ProductDetailProps {
   initialProduct: Product | null;
@@ -35,6 +37,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [productRating] = useState(generateRandomRating());
 
   useEffect(() => {
     const email = localStorage.getItem('userEmail');
@@ -110,7 +113,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
 
       // Validate the hostname is in our allowed list
       const allowedHosts = [
-        'i.imgur.com',
+      'i.imgur.com',
       'api.escuelajs.co',
       'picsum.photos',
       'images.unsplash.com',
@@ -140,6 +143,10 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       'images.tokopedia.net',
       'lavanilla.id',
       'sosialita.id',
+      'iili.io',
+      'i.pinimg.com',
+      'example.com',
+      'upload.jaknot.com',
       ];
       
       const url = new URL(cleanUrl);
@@ -419,7 +426,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {showNotification && (
         <Notification
           message={notificationMessage}
@@ -522,43 +529,37 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
                 </span>
               </nav>
 
-              <h1 className="text-3xl lg:text-4xl font-bold mb-4 lg:mb-6 text-gray-900 dark:text-white">{product.title}</h1>
+              <h1 className="text-3xl lg:text-4xl font-bold mb-2 lg:mb-3 text-gray-900 dark:text-white">{product.title}</h1>
+              
+              <div className="flex items-center gap-4 mb-4 lg:mb-6">
+                <Rating rating={productRating.rating} reviews={productRating.reviews} size="lg" />
+                <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
+                <span className="text-gray-500 dark:text-gray-400">{product.category.name}</span>
+              </div>
               
               <div className="prose prose-lg mb-6 lg:mb-8">
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{product.description}</p>
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 lg:p-8 w-full shadow-sm">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 sm:p-6 w-full shadow-sm">
               <div className="flex flex-col space-y-6 lg:space-y-0 lg:flex-row lg:items-center lg:justify-between lg:gap-6 mb-6">
-                <div>
+                <div className='flex flex-row items-center space-x-2'>
                   <span className="text-3xl lg:text-4xl font-bold text-blue-500 dark:text-blue-400">${product.price}</span>
                   {product.price > 50 && (
-                    <span className="block lg:inline-block mt-2 lg:mt-0 lg:ml-3 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-sm px-3 py-1.5 rounded-full font-medium">
+                    <span className="mt-2 lg:mt-0 lg:ml-3 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-sm px-3 py-1.5 rounded-full font-medium">
                       Free Shipping
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4 justify-between w-full">
-                  <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 justify-between w-fit">
+                  <div className="flex items-center justify-end w-full">
+                  <div className="mr-4">
                     <label htmlFor="quantity" className="text-gray-700 dark:text-gray-300 font-medium">
                       Quantity:
                     </label>
                   </div>
-                  {userEmail && (
-                    <button
-                      onClick={toggleFavorite}
-                      className="p-2 bg-white dark:bg-gray-700 rounded-lg shadow-lg text-red-500 hover:text-red-600 transition-colors duration-200"
-                      title={favorites.some(fav => fav.id === product?.id) ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      {favorites.some(fav => fav.id === product?.id) ? (
-                        <FaHeart className="h-6 w-6" />
-                      ) : (
-                        <FaRegHeart className="h-6 w-6" />
-                      )}
-                    </button>
-                  )}
-                  <div className="flex items-center rounded-lg bg-white dark:bg-gray-700">
+                  <div className="rounded-lg bg-white dark:bg-gray-700">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       className="px-4 py-2 bg-blue-500 text-white rounded-l-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
@@ -573,7 +574,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
                       max="99"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
-                      className="w-16 text-center border-x py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                      className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-12 text-center border-x py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
                     />
                     <button
                       onClick={() => setQuantity(Math.min(99, quantity + 1))}
@@ -582,6 +583,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
                     >
                       +
                     </button>
+                    </div>
                   </div>
                 </div>
               </div>

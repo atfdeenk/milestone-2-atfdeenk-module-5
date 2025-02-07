@@ -20,7 +20,14 @@ const validateImageUrl = (url: string): string => {
       'robohash.org',
       'carshow.id',
       'storage.googleapis.com',
-      'storage.cloud.google.com'
+      'storage.cloud.google.com',
+      'i.imgur.com',
+      'sosialita.id',
+      'iili.io',
+      'i.pinimg.com',
+      'example.com',
+      'upload.jaknot.com',
+      'lavanilla.id'
     ];
 
     return allowedDomains.includes(parsed.hostname) ? url : DEFAULT_IMAGE;
@@ -147,8 +154,7 @@ export default function CategoryList({
                       const target = e.target as HTMLImageElement;
                       target.src = DEFAULT_IMAGE;
                     }}
-                    />
-                  )}
+                  />
                 </div>
               </td>
               <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 dark:text-gray-200">

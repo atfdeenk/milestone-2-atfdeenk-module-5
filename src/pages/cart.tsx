@@ -482,7 +482,7 @@ export default function Cart() {
                             max="99"
                             value={item.quantity}
                             onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                            className="w-12 text-center bg-transparent border-none text-gray-900 dark:text-white focus:outline-none focus:ring-0"
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-12 text-center bg-transparent border-none text-gray-900 dark:text-white focus:outline-none focus:ring-0"
                           />
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}

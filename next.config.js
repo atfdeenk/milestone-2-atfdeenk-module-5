@@ -33,6 +33,10 @@ const nextConfig = {
       'images.tokopedia.net',
       'lavanilla.id',
       'sosialita.id',
+      'iili.io',
+      'i.pinimg.com',
+      'example.com',
+      'upload.jaknot.com',
     ],
   },
 }

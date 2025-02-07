@@ -535,21 +535,24 @@ export default function AdminDashboard() {
             operation={progress.operation}
           />
         )}
-        <div className="container mx-auto px-4 py-6">
-          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg mb-6 transition-colors duration-200">
+        <div className="container max-w-7xl mx-auto px-4 py-8">
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl mb-6 transition-colors duration-200">
             <div className="p-6">
-              <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold dark:text-white">Admin Dashboard</h1>
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your products and categories</p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => setShowForm(true)}
-                    className="px-3 py-1.5 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors duration-200"
                   >
                     Add Product
                   </button>
                   <button
                     onClick={() => setShowCategoryForm(true)}
-                    className="px-3 py-1.5 bg-purple-500 text-white text-sm rounded hover:bg-purple-600"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition-colors duration-200"
                   >
                     Add Category
                   </button>
@@ -559,7 +562,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm transition-colors duration-200">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-200">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Products Summary</h2>
               <div className="flex items-center gap-2">
