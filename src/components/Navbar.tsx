@@ -198,8 +198,24 @@ const Navbar = () => {
                         Dashboard
                       </Link>
                     )}
+                    {!isAdmin && (
+                      <>
+                        <Link
+                          href="/profile?tab=orders"
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                        >
+                          Order History
+                        </Link>
+                        <Link
+                          href="/profile?tab=favorites"
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                        >
+                          Favorites
+                        </Link>
+                      </>
+                    )}
                     <Link
-                      href="/profile"
+                      href="/profile?tab=account"
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                     >
                       Profile

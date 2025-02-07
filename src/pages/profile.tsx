@@ -42,13 +42,21 @@ const getToggleKnobClass = (isActive: boolean) => {
 
 export default function Profile() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('orders');
+  const { tab } = router.query;
+  const [activeTab, setActiveTab] = useState(typeof tab === 'string' ? tab : 'account');
   const [isLoading, setIsLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
+
+  // Sync tab state with URL query
+  useEffect(() => {
+    if (tab && typeof tab === 'string' && ['account', 'orders', 'favorites'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [tab]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -160,28 +168,68 @@ export default function Profile() {
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex">
               <button
-                onClick={() => setActiveTab('orders')}
+                onClick={() => {
+                  setActiveTab('account');
+                  router.push('/profile?tab=account', undefined, { shallow: true });
+                }}
+                className={getTabButtonClass(activeTab === 'account')}
+              >
+                Account
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('orders');
+                  router.push('/profile?tab=orders', undefined, { shallow: true });
+                }}
                 className={getTabButtonClass(activeTab === 'orders')}
               >
                 Order History
               </button>
               <button
-                onClick={() => setActiveTab('favorites')}
+                onClick={() => {
+                  setActiveTab('favorites');
+                  router.push('/profile?tab=favorites', undefined, { shallow: true });
+                }}
                 className={getTabButtonClass(activeTab === 'favorites')}
               >
                 Favorites
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={getTabButtonClass(activeTab === 'settings')}
-              >
-                Settings
               </button>
             </nav>
           </div>
 
           {/* Tab Content */}
           <div className="p-6">
+            {/* Account Settings */}
+            {activeTab === 'account' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div>
+                    <h3 className="font-medium text-gray-900 dark:text-white">Dark Mode</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Toggle dark mode appearance</p>
+                  </div>
+                  <button
+                    onClick={handleDarkModeToggle}
+                    className={getToggleButtonClass(darkMode)}
+                  >
+                    <span className={getToggleKnobClass(darkMode)} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div>
+                    <h3 className="font-medium text-gray-900 dark:text-white">Email Notifications</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Receive order updates and promotions</p>
+                  </div>
+                  <button
+                    onClick={handleEmailNotificationsToggle}
+                    className={getToggleButtonClass(emailNotifications)}
+                  >
+                    <span className={getToggleKnobClass(emailNotifications)} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Order History */}
             {activeTab === 'orders' && (
               <div className="space-y-6">
