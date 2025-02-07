@@ -139,6 +139,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       'bmw.scene7.com',
       'images.tokopedia.net',
       'lavanilla.id',
+      'sosialita.id',
       ];
       
       const url = new URL(cleanUrl);
@@ -451,25 +452,41 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
           {/* Image Gallery */}
           <div className="w-full lg:w-1/2 lg:sticky lg:top-4">
             <div className="relative aspect-square w-full bg-gray-100">
-              {selectedImage && !imageError ? (
-                <Image
-                  src={selectedImage}
-                  alt={product?.title || 'Product Image'}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
-                  className="object-cover"
-                  priority
-                  onError={() => {
-                    console.error('Image failed to load:', selectedImage);
-                    setImageError(true);
-                    setSelectedImage('https://i.imgur.com/QkIa5tT.jpeg');
-                  }}
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                  <span className="text-gray-500">Image not available</span>
-                </div>
-              )}
+              <div className="relative w-full h-full">
+                {selectedImage && !imageError ? (
+                  <>
+                    <Image
+                      src={selectedImage}
+                      alt={product?.title || 'Product Image'}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+                      className="object-cover"
+                      priority
+                      onError={() => {
+                        console.error('Image failed to load:', selectedImage);
+                        setImageError(true);
+                        setSelectedImage('https://i.imgur.com/QkIa5tT.jpeg');
+                      }}
+                    />
+                    {userEmail && (
+                      <button
+                        onClick={toggleFavorite}
+                        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-lg transition-colors duration-200"
+                      >
+                        {favorites.some(fav => fav.id === product.id) ? (
+                          <FaHeart className="h-6 w-6 text-red-500" />
+                        ) : (
+                          <FaRegHeart className="h-6 w-6 text-gray-600 hover:text-red-500" />
+                        )}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                    <span className="text-gray-500">Image not available</span>
+                  </div>
+                )}
+              </div>
             </div>
             {product.images.length > 1 && (
               <div className="mt-4 grid grid-cols-4 gap-4">

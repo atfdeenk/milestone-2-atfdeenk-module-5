@@ -32,6 +32,7 @@ const nextConfig = {
       'bmw.scene7.com',
       'images.tokopedia.net',
       'lavanilla.id',
+      'sosialita.id',
     ],
   },
 }
