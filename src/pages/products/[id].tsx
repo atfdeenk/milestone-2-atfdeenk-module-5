@@ -62,7 +62,16 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       updatedFavorites = favorites.filter(fav => fav.id !== product.id);
       setNotificationMessage('Removed from favorites');
     } else {
-      updatedFavorites = [...favorites, product];
+      // Process images before adding to favorites
+      const processedProduct = {
+        ...product,
+        images: Array.isArray(product.images) 
+          ? product.images.map(img => parseImageUrl(img))
+          : product.images 
+            ? [parseImageUrl(product.images[0])]
+            : [parseImageUrl('')]
+      };
+      updatedFavorites = [...favorites, processedProduct];
       setNotificationMessage('Added to favorites');
     }
 
@@ -85,89 +94,74 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
     try {
       // Handle empty or invalid input
       if (!rawUrl || typeof rawUrl !== 'string') {
-        throw new Error('Invalid image URL');
+        console.log('Empty or invalid input');
+        return 'https://i.imgur.com/QkIa5tT.jpeg';
       }
 
       let finalUrl = rawUrl;
+      let attempts = 0;
+      const maxAttempts = 3;
 
-      // Try to parse if it looks like JSON
-      if (rawUrl.trim().startsWith('[') || rawUrl.trim().startsWith('{') || rawUrl.trim().startsWith('"')) {
+      // Keep trying to parse JSON until we get a clean URL
+      while (attempts < maxAttempts && 
+             (finalUrl.includes('\\"') || 
+              finalUrl.trim().startsWith('[') || 
+              finalUrl.trim().startsWith('{') || 
+              finalUrl.trim().startsWith('"'))) {
         try {
-          const parsed = JSON.parse(rawUrl);
+          console.log(`Attempt ${attempts + 1} to parse JSON:`, finalUrl);
+          const parsed = JSON.parse(finalUrl);
           if (Array.isArray(parsed)) {
             finalUrl = parsed[0];
           } else if (typeof parsed === 'string') {
             finalUrl = parsed;
+          } else if (parsed && typeof parsed === 'object' && parsed.url) {
+            finalUrl = parsed.url;
           } else {
             throw new Error('Invalid JSON format');
           }
+          attempts++;
         } catch (jsonError) {
-          // If JSON parsing fails, try to use the raw URL after cleaning
-          finalUrl = rawUrl.replace(/[\[\]"]/g, '').trim();
+          console.log('JSON parsing failed, cleaning string');
+          finalUrl = finalUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+          break;
         }
       }
 
-      // Clean up the URL
-      const cleanUrl = finalUrl.replace(/[\[\]"]/g, '').trim();
-      console.log('Cleaned URL:', cleanUrl);
+      // Final cleanup
+      let processedUrl = finalUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+      console.log('Cleaned URL:', processedUrl);
       
-      // Validate URL
-      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-        throw new Error('Invalid URL protocol');
+      // Handle URLs that start with // or don't have protocol
+      if (processedUrl.startsWith('//')) {
+        processedUrl = 'https:' + processedUrl;
+      } else if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+        processedUrl = 'https://' + processedUrl;
       }
       
-      // Check for unreliable image sources and replace with reliable fallbacks
-      const unreliableSources = ['placeimg.com', 'pravatar.cc', 'example.com'];
-      if (unreliableSources.some(source => cleanUrl.includes(source))) {
-        console.log('Found unreliable image source, using fallback');
-        return 'https://picsum.photos/400/300';
-      }
-
-      // Validate the hostname is in our allowed list
-      const allowedHosts = [
-      'i.imgur.com',
-      'api.escuelajs.co',
-      'picsum.photos',
-      'images.unsplash.com',
-      'via.placeholder.com',
-      'fastly.picsum.photos',
-      'loremflickr.com',
-      'cloudflare-ipfs.com',
-      'raw.githubusercontent.com',
-      'avatars.githubusercontent.com',
-      'robohash.org',
-      'carshow.id',
-      'storage.googleapis.com',
-      'storage.cloud.google.com',
-      'api.escuelajs.co',
-      'img.lazcdn.com',
-      'i5.walmartimages.com',
-      'www.thekooples.com',
-      'cdn.shopify.com',
-      'i.pravatar.cc',
-      'pravatar.cc',
-      'sdcdn.io',
-      'gravatar.com',
-      'image1.jpg',
-      'placeimg.com',
-      'api.lorem.space',
-      'bmw.scene7.com',
-      'images.tokopedia.net',
-      'lavanilla.id',
-      'sosialita.id',
-      'iili.io',
-      'i.pinimg.com',
-      'example.com',
-      'upload.jaknot.com',
-      ];
-      
-      const url = new URL(cleanUrl);
-      if (!allowedHosts.includes(url.hostname)) {
-        console.log('URL hostname not in allowed list:', url.hostname);
+      // Block specific unsafe domains
+      try {
+        const url = new URL(processedUrl);
+        const blockedHosts = [
+          'example.com',
+          'localhost',
+          '127.0.0.1',
+          'malicious-site.com',
+          'placeimg.com',
+          'pravatar.cc'
+        ];
+        
+        if (blockedHosts.includes(url.hostname)) {
+          console.log('Blocked hostname detected:', url.hostname);
+          return 'https://i.imgur.com/QkIa5tT.jpeg';
+        }
+      } catch (urlError) {
+        console.error('Invalid URL:', urlError);
         return 'https://i.imgur.com/QkIa5tT.jpeg';
       }
       
-      return cleanUrl;
+      console.log('Final processed URL:', processedUrl);
+      return processedUrl;
     } catch (err) {
       console.error('Error parsing image URL:', err);
       return 'https://i.imgur.com/QkIa5tT.jpeg';
@@ -176,28 +170,28 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
 
   useEffect(() => {
     if (initialProduct?.images) {
+      console.log('Initial product images:', initialProduct.images);
       try {
         let processedImages: string[] = [];
+        
         if (Array.isArray(initialProduct.images)) {
-          processedImages = initialProduct.images.map(img => parseImageUrl(img));
+          console.log('Processing array of images');
+          processedImages = initialProduct.images.map((img: string) => parseImageUrl(img));
         } else if (typeof initialProduct.images === 'string') {
-          // Handle case where images is a JSON string of array
-          try {
-            const parsedImages = JSON.parse(initialProduct.images);
-            if (Array.isArray(parsedImages)) {
-              processedImages = parsedImages.map(img => parseImageUrl(img));
-            } else {
-              processedImages = [parseImageUrl(initialProduct.images)];
-            }
-          } catch {
-            processedImages = [parseImageUrl(initialProduct.images)];
-          }
+          console.log('Processing string image:', initialProduct.images);
+          processedImages = [parseImageUrl(initialProduct.images)];
         }
 
+        console.log('Final processed images:', processedImages);
         if (processedImages.length > 0) {
+          console.log('Setting selected image to:', processedImages[0]);
           setSelectedImage(processedImages[0]);
           // Update product with processed images
-          setProduct(prev => prev ? { ...prev, images: processedImages } : null);
+          setProduct(prev => {
+            const updated = prev ? { ...prev, images: processedImages } : null;
+            console.log('Updated product:', updated);
+            return updated;
+          });
         } else {
           throw new Error('No valid images found');
         }
@@ -239,8 +233,9 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
         if (Array.isArray(data.images) && data.images.length > 0) {
           try {
             console.log('Processing fetched product images:', data.images);
-            const imageUrl = parseImageUrl(data.images[0]);
-            setSelectedImage(imageUrl);
+            const processedImages = data.images.map((img: string) => parseImageUrl(img));
+            setProduct(prev => prev ? { ...prev, images: processedImages } : null);
+            setSelectedImage(processedImages[0]);
             setImageError(false);
           } catch (err) {
             console.error('Error processing fetched product image:', err);
@@ -521,7 +516,7 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
             </div>
             {Array.isArray(product.images) && product.images.length > 1 && (
               <div className="mt-4 grid grid-cols-4 gap-4">
-                {product.images.map((image, index) => (
+                {product.images.map((image: string, index: number) => (
                   <button
                     key={index}
                     onClick={() => {

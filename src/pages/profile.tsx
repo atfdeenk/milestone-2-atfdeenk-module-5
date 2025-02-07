@@ -426,19 +426,55 @@ export default function Profile() {
                         {(() => {
                           let imageUrl = 'https://i.imgur.com/QkIa5tT.jpeg';
                           try {
-                            // If images is a string array
                             if (Array.isArray(product.images) && product.images.length > 0) {
                               const firstImage = product.images[0];
-                              // If the first image is a stringified array/object
-                              if (typeof firstImage === 'string' && firstImage.startsWith('[')) {
-                                const parsed = JSON.parse(firstImage);
-                                imageUrl = Array.isArray(parsed) ? parsed[0] : parsed;
-                              } else {
-                                imageUrl = firstImage;
+                              if (typeof firstImage === 'string') {
+                                // Clean up the URL
+                                let processedUrl = firstImage;
+                                let attempts = 0;
+                                const maxAttempts = 3;
+
+                                // Keep trying to parse JSON until we get a clean URL
+                                while (attempts < maxAttempts && 
+                                      (processedUrl.includes('\\"') || 
+                                       processedUrl.trim().startsWith('[') || 
+                                       processedUrl.trim().startsWith('{') || 
+                                       processedUrl.trim().startsWith('"'))) {
+                                  try {
+                                    console.log(`Attempt ${attempts + 1} to parse JSON:`, processedUrl);
+                                    const parsed = JSON.parse(processedUrl);
+                                    if (Array.isArray(parsed)) {
+                                      processedUrl = parsed[0];
+                                    } else if (typeof parsed === 'string') {
+                                      processedUrl = parsed;
+                                    } else if (parsed && typeof parsed === 'object' && parsed.url) {
+                                      processedUrl = parsed.url;
+                                    } else {
+                                      throw new Error('Invalid JSON format');
+                                    }
+                                    attempts++;
+                                  } catch (jsonError) {
+                                    console.log('JSON parsing failed, cleaning string');
+                                    processedUrl = processedUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+                                    break;
+                                  }
+                                }
+
+                                // Final cleanup
+                                processedUrl = processedUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+                                
+                                // Handle URLs that start with // or don't have protocol
+                                if (processedUrl.startsWith('//')) {
+                                  processedUrl = 'https:' + processedUrl;
+                                } else if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+                                  processedUrl = 'https://' + processedUrl;
+                                }
+
+                                imageUrl = processedUrl;
                               }
                             }
                           } catch (e) {
-                            console.error('Error parsing image:', e);
+                            console.error('Error processing image URL:', e);
                           }
                           return (
                             <Image

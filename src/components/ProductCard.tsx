@@ -42,10 +42,43 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onFavoriteToggle }) 
   
   const extractUrl = (urlString: string): string => {
     try {
-      // Remove escaped quotes and parse
-      const cleaned = urlString.replace(/\\"|"/g, '');
+      console.log('Extracting URL from:', urlString);
+      let finalUrl = urlString;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      // Keep trying to parse JSON until we get a clean URL
+      while (attempts < maxAttempts && 
+             (finalUrl.includes('\\"') || 
+              finalUrl.trim().startsWith('[') || 
+              finalUrl.trim().startsWith('{') || 
+              finalUrl.trim().startsWith('"'))) {
+        try {
+          console.log(`Attempt ${attempts + 1} to parse JSON:`, finalUrl);
+          const parsed = JSON.parse(finalUrl);
+          if (Array.isArray(parsed)) {
+            finalUrl = parsed[0];
+          } else if (typeof parsed === 'string') {
+            finalUrl = parsed;
+          } else if (parsed && typeof parsed === 'object' && parsed.url) {
+            finalUrl = parsed.url;
+          } else {
+            throw new Error('Invalid JSON format');
+          }
+          attempts++;
+        } catch (jsonError) {
+          console.log('JSON parsing failed, cleaning string');
+          finalUrl = finalUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+          break;
+        }
+      }
+
+      // Final cleanup
+      const cleaned = finalUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+      console.log('Cleaned URL:', cleaned);
       return cleaned.startsWith('http') ? cleaned : fallbackImage;
-    } catch {
+    } catch (error) {
+      console.error('Error extracting URL:', error);
       return fallbackImage;
     }
   };
@@ -54,16 +87,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onFavoriteToggle }) 
     try {
       const firstImage = product.images[0];
       if (typeof firstImage === 'string') {
-        if (firstImage.startsWith('[')) {
-          // Handle array format: ["https://example.com/image.jpg"]
-          const urlMatch = firstImage.match(/\["(.+?)"\]/); 
-          if (urlMatch && urlMatch[1]) {
-            imageUrl = extractUrl(urlMatch[1]);
-          }
-        } else if (firstImage.startsWith('http')) {
-          // Direct URL
-          imageUrl = firstImage;
-        }
+        imageUrl = extractUrl(firstImage);
       }
     } catch (error) {
       console.error('Error parsing image URL:', error);

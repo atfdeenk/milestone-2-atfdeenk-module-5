@@ -64,7 +64,59 @@ const Products = ({ initialProducts, initialCategories, appliedFilters }: { init
     if (isFavorite) {
       updatedFavorites = favorites.filter(fav => fav.id !== product.id);
     } else {
-      updatedFavorites = [...favorites, product];
+      // Process images before adding to favorites
+      const processedProduct = {
+        ...product,
+        images: Array.isArray(product.images) 
+          ? product.images.map(img => {
+              try {
+                let processedUrl = img;
+                let attempts = 0;
+                const maxAttempts = 3;
+
+                // Keep trying to parse JSON until we get a clean URL
+                while (attempts < maxAttempts && 
+                       (processedUrl.includes('\\"') || 
+                        processedUrl.trim().startsWith('[') || 
+                        processedUrl.trim().startsWith('{') || 
+                        processedUrl.trim().startsWith('"'))) {
+                  try {
+                    const parsed = JSON.parse(processedUrl);
+                    if (Array.isArray(parsed)) {
+                      processedUrl = parsed[0];
+                    } else if (typeof parsed === 'string') {
+                      processedUrl = parsed;
+                    } else if (parsed && typeof parsed === 'object' && parsed.url) {
+                      processedUrl = parsed.url;
+                    } else {
+                      throw new Error('Invalid JSON format');
+                    }
+                    attempts++;
+                  } catch (jsonError) {
+                    processedUrl = processedUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+                    break;
+                  }
+                }
+
+                // Final cleanup
+                processedUrl = processedUrl.replace(/\\"|\\/g, '').replace(/[\[\]"]/g, '').trim();
+                
+                // Handle URLs that start with // or don't have protocol
+                if (processedUrl.startsWith('//')) {
+                  processedUrl = 'https:' + processedUrl;
+                } else if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+                  processedUrl = 'https://' + processedUrl;
+                }
+
+                return processedUrl;
+              } catch (error) {
+                console.error('Error processing image URL:', error);
+                return 'https://i.imgur.com/QkIa5tT.jpeg';
+              }
+            })
+          : ['https://i.imgur.com/QkIa5tT.jpeg']
+      };
+      updatedFavorites = [...favorites, processedProduct];
     }
 
     setFavorites(updatedFavorites);
