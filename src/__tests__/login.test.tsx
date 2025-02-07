@@ -204,6 +204,12 @@ describe('Login Page', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
 
     await waitFor(() => {
+      // First, the token should be set
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('token', 'fake-token')
+      // Then the user data should be set
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('userName', mockUserData.name)
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('userEmail', mockUserData.email)
+      // Finally, the cart data should be set and event dispatched
       expect(localStorageMock.setItem).toHaveBeenCalledWith('cart', mockCartData)
       expect(window.dispatchEvent).toHaveBeenCalled()
     })

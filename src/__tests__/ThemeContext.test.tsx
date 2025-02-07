@@ -19,11 +19,18 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 })
 
-// Mock document.documentElement.classList
+// Mock document.documentElement.classList and style
 Object.defineProperty(document.documentElement, 'classList', {
   value: {
     add: jest.fn(),
     remove: jest.fn(),
+  },
+  configurable: true,
+})
+
+Object.defineProperty(document.documentElement, 'style', {
+  value: {
+    setProperty: jest.fn(),
   },
   configurable: true,
 })
@@ -47,59 +54,83 @@ describe('ThemeContext', () => {
     jest.spyOn(document.documentElement.classList, 'remove')
   })
 
-  it('provides default light theme', () => {
+  it('provides default light theme', async () => {
     render(
       <ThemeProvider>
         <TestComponent />
       </ThemeProvider>
     )
+
+    // Wait for mounted state
+    await screen.findByTestId('theme-value')
 
     expect(screen.getByTestId('theme-value')).toHaveTextContent('light')
     expect(document.documentElement.classList.remove).toHaveBeenCalledWith('dark')
   })
 
-  it('loads saved dark theme from localStorage', () => {
-    localStorageMock.getItem.mockReturnValueOnce('dark')
+  it('loads saved dark theme from localStorage', async () => {
+    localStorageMock.getItem.mockReturnValue('dark')
 
     render(
       <ThemeProvider>
         <TestComponent />
       </ThemeProvider>
     )
+
+    // Wait for mounted state and theme value
+    await screen.findByTestId('theme-value')
+    await screen.findByText('dark')
 
     expect(screen.getByTestId('theme-value')).toHaveTextContent('dark')
     expect(document.documentElement.classList.add).toHaveBeenCalledWith('dark')
+    expect(document.documentElement.style.setProperty).toHaveBeenCalledWith('color-scheme', 'dark')
   })
 
-  it('toggles theme when button is clicked', () => {
+  it('toggles theme when button is clicked', async () => {
     render(
       <ThemeProvider>
         <TestComponent />
       </ThemeProvider>
     )
+
+    // Wait for mounted state
+    await screen.findByTestId('theme-value')
 
     // Initial state
     expect(screen.getByTestId('theme-value')).toHaveTextContent('light')
 
     // Toggle to dark
-    fireEvent.click(screen.getByText('Toggle Theme'))
+    await act(async () => {
+      fireEvent.click(screen.getByText('Toggle Theme'))
+    })
+    
     expect(screen.getByTestId('theme-value')).toHaveTextContent('dark')
     expect(document.documentElement.classList.add).toHaveBeenCalledWith('dark')
+    expect(document.documentElement.style.setProperty).toHaveBeenCalledWith('color-scheme', 'dark')
     expect(localStorageMock.setItem).toHaveBeenCalledWith('theme', 'dark')
 
     // Toggle back to light
-    fireEvent.click(screen.getByText('Toggle Theme'))
+    await act(async () => {
+      fireEvent.click(screen.getByText('Toggle Theme'))
+    })
+    
     expect(screen.getByTestId('theme-value')).toHaveTextContent('light')
+    expect(document.documentElement.classList.remove).toHaveBeenCalledWith('dark')
+    expect(document.documentElement.style.setProperty).toHaveBeenCalledWith('color-scheme', 'light')
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('theme', 'light')
     expect(document.documentElement.classList.remove).toHaveBeenCalledWith('dark')
     expect(localStorageMock.setItem).toHaveBeenCalledWith('theme', 'light')
   })
 
-  it('persists theme changes to localStorage', () => {
+  it('persists theme changes to localStorage', async () => {
     render(
       <ThemeProvider>
         <TestComponent />
       </ThemeProvider>
     )
+
+    // Wait for mounted state
+    await screen.findByTestId('theme-value')
 
     fireEvent.click(screen.getByText('Toggle Theme'))
     expect(localStorageMock.setItem).toHaveBeenCalledWith('theme', 'dark')
