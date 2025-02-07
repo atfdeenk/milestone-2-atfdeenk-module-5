@@ -63,16 +63,21 @@ export default function CategoryList({
   };
 
   return (
-    <div className="overflow-x-auto mt-8">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={selectedCategories.length === categories.length}
-            onChange={toggleSelectAllCategories}
-            className="rounded border-gray-300"
-          />
-          <span>Select All Categories</span>
+    <div className="overflow-x-auto mt-8 rounded-lg shadow-sm">
+      <div className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selectedCategories.length === categories.length}
+              onChange={toggleSelectAllCategories}
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium dark:text-gray-200">Select All Categories</span>
+          </div>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {selectedCategories.length} of {categories.length} selected
+          </span>
         </div>
         {selectedCategories.length > 0 && (
           <button
@@ -110,28 +115,28 @@ export default function CategoryList({
           </button>
         )}
       </div>
-      <table className="min-w-full bg-white border border-gray-300">
-        <thead>
+      <table className="min-w-full bg-white dark:bg-gray-800 transition-colors duration-200">
+        <thead className="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <th className="px-6 py-3 border-b border-gray-300"></th>
-            <th className="px-6 py-3 border-b border-gray-300">Name</th>
-            <th className="px-6 py-3 border-b border-gray-300">Image</th>
-            <th className="px-6 py-3 border-b border-gray-300">Actions</th>
+            <th className="w-12 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"></th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody>
           {categories.map((category) => (
             <tr key={category.id}>
-              <td className="px-6 py-4 border-b border-gray-300">
+              <td className="px-6 py-4 whitespace-nowrap text-sm bg-white dark:bg-gray-800">
                 <input
                   type="checkbox"
                   checked={selectedCategories.includes(category.id)}
                   onChange={() => toggleSelectCategory(category.id)}
-                  className="rounded border-gray-300"
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 focus:ring-blue-500"
                 />
               </td>
-              <td className="px-6 py-4 border-b border-gray-300">{category.name}</td>
-              <td className="px-6 py-4 border-b border-gray-300">
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-gray-800">{category.name}</td>
+              <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 dark:text-gray-200">
                 <div className="relative w-16 h-16">
                   <Image
                     src={validateImageUrl(category.image)}
@@ -146,7 +151,7 @@ export default function CategoryList({
                   )}
                 </div>
               </td>
-              <td className="px-6 py-4 border-b border-gray-300">
+              <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 dark:text-gray-200">
                 <button
                   onClick={() => handleEditCategory(category)}
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"

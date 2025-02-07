@@ -21,12 +21,15 @@ export default function App({ Component, pageProps }: AppProps) {
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       if (typeof input === 'string' && input.includes('api.escuelajs.co')) {
         const token = getAuthToken();
-        if (token) {
+        const adminToken = localStorage.getItem('adminToken');
+        const authToken = adminToken || token;
+
+        if (authToken) {
           init = {
             ...init,
             headers: {
               ...init?.headers,
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${authToken}`,
             },
           };
         }
@@ -41,7 +44,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         {showNavbar ? (
           <Navbar />
         ) : (

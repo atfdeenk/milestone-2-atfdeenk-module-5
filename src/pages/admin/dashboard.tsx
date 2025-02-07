@@ -428,6 +428,16 @@ export default function AdminDashboard() {
       operation: editingCategory ? 'Updating Category' : 'Creating Category'
     });
 
+    // Validate URL format
+    try {
+      new URL(categoryFormData.image);
+    } catch (err) {
+      setError('Please enter a valid image URL (e.g., https://example.com/image.jpg)');
+      setCreatingCategory(false);
+      setProgress({ current: 0, total: 0, operation: '' });
+      return;
+    }
+
     const adminToken = localStorage.getItem('adminToken');
     if (!adminToken) {
       setError('Admin token not found. Please log in again.');
@@ -517,7 +527,7 @@ export default function AdminDashboard() {
       <Head>
         <title>Admin Dashboard</title>
       </Head>
-      <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
+      <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
         {progress.total > 0 && (
           <ProgressBar
             progress={progress.current}
@@ -526,7 +536,7 @@ export default function AdminDashboard() {
           />
         )}
         <div className="container mx-auto px-4 py-6">
-          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg mb-6">
+          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg mb-6 transition-colors duration-200">
             <div className="p-6">
               <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold dark:text-white">Admin Dashboard</h1>
@@ -549,7 +559,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm transition-colors duration-200">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Products Summary</h2>
               <div className="flex items-center gap-2">
@@ -583,7 +593,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm transition-colors duration-200">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Categories Summary</h2>
               <div className="flex items-center gap-2">

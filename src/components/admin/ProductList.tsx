@@ -74,16 +74,21 @@ export default function ProductList({
   });
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={selectedProducts.length === products.length}
-            onChange={toggleSelectAll}
-            className="rounded border-gray-300"
-          />
-          <span>Select All</span>
+    <div className="overflow-x-auto rounded-lg shadow-sm">
+      <div className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selectedProducts.length === products.length}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium dark:text-gray-200">Select All</span>
+          </div>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {selectedProducts.length} of {products.length} selected
+          </span>
         </div>
         {selectedProducts.length > 0 && (
           <button
@@ -121,24 +126,24 @@ export default function ProductList({
           </button>
         )}
       </div>
-      <table className="min-w-full bg-white border border-gray-300">
-        <thead>
+      <table className="min-w-full bg-white dark:bg-gray-800 transition-colors duration-200">
+        <thead className="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <th className="px-6 py-3 border-b border-gray-300"></th>
+            <th className="w-12 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"></th>
             <th
-              className="px-6 py-3 border-b border-gray-300 cursor-pointer"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
               onClick={() => handleSort('title')}
             >
               Title {sortConfig.field === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
             </th>
             <th
-              className="px-6 py-3 border-b border-gray-300 cursor-pointer"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
               onClick={() => handleSort('price')}
             >
               Price {sortConfig.field === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
             </th>
             <th
-              className="px-6 py-3 border-b border-gray-300 cursor-pointer"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
               onClick={() => handleSort('category')}
             >
               Category {sortConfig.field === 'category' && (sortConfig.direction === 'asc' ? '↑' : '↓')}

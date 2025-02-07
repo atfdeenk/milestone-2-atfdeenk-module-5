@@ -2,18 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+
+  .dark {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-}
+@layer base {
+  body {
+    @apply text-gray-900 bg-white transition-colors duration-200;
+  }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  .dark body {
+    @apply text-gray-100 bg-gray-900;
+  }
 }

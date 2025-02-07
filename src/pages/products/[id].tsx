@@ -71,7 +71,9 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsLoggedIn(localStorage.getItem('token') !== null);
+      const token = localStorage.getItem('token');
+      const adminToken = localStorage.getItem('adminToken');
+      setIsLoggedIn(token !== null || adminToken !== null);
     }
   }, []);
 
@@ -235,7 +237,8 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
 
       let currentCart = [];
       const userEmail = localStorage.getItem('userEmail');
-      const cartKey = userEmail ? `cart_${userEmail}` : 'cart';
+      const isAdmin = localStorage.getItem('adminToken') !== null;
+      const cartKey = isAdmin ? 'cart' : (userEmail ? `cart_${userEmail}` : 'cart');
       
       try {
         const savedCart = localStorage.getItem(cartKey);
@@ -259,8 +262,8 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       }
 
       localStorage.setItem(cartKey, JSON.stringify(currentCart));
-      if (userEmail) {
-        localStorage.setItem('cart', JSON.stringify(currentCart)); // Sync with general cart
+      if (!isAdmin && userEmail) {
+        localStorage.setItem('cart', JSON.stringify(currentCart)); // Sync with general cart only for regular users
       }
 
       // Dispatch events to notify other components

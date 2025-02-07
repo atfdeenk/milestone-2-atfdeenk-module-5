@@ -19,7 +19,8 @@ export default function Cart() {
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
   const [isNavigating, setIsNavigating] = useState(false);
   const [discountPercentage, setDiscountPercentage] = useState(0);
-  const isLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('token') !== null : false;
+  const isLoggedIn = typeof window !== 'undefined' ? 
+    (localStorage.getItem('token') !== null || localStorage.getItem('adminToken') !== null) : false;
 
   useEffect(() => {
     setIsNavigating(false);
@@ -32,14 +33,15 @@ export default function Cart() {
         
         // First try user-specific cart
         const userEmail = localStorage.getItem('userEmail');
+        const isAdmin = localStorage.getItem('adminToken') !== null;
         let cartData = null;
         
-        if (userEmail) {
+        if (userEmail && !isAdmin) {
           cartData = localStorage.getItem(`cart_${userEmail}`);
         }
         
-        // Fallback to general cart
-        if (!cartData) {
+        // For admin users or as fallback, use the general cart
+        if (!cartData || isAdmin) {
           cartData = localStorage.getItem('cart');
         }
 
@@ -88,7 +90,8 @@ export default function Cart() {
     // Check authentication status
     const checkAuth = () => {
       const token = getAuthToken();
-      if (!token) {
+      const adminToken = localStorage.getItem('adminToken');
+      if (!token && !adminToken) {
         router.push('/login');
       }
     };
@@ -116,13 +119,15 @@ export default function Cart() {
 
       setCart(cartWithSelection);
       
-      // Always update both storage locations
-      localStorage.setItem('cart', JSON.stringify(cartWithSelection));
-      
       const userEmail = localStorage.getItem('userEmail');
-      if (userEmail) {
+      const isAdmin = localStorage.getItem('adminToken') !== null;
+
+      // For admin users, always use the general cart
+      if (userEmail && !isAdmin) {
         localStorage.setItem(`cart_${userEmail}`, JSON.stringify(cartWithSelection));
       }
+      // Always update the general cart for admins or as backup
+      localStorage.setItem('cart', JSON.stringify(cartWithSelection));
       
       // Notify other components
       window.dispatchEvent(new Event('storage'));

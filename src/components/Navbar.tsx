@@ -159,21 +159,22 @@ const Navbar = () => {
               )}
 
               {/* Cart and Profile buttons */}
+              {(isLoggedIn || isAdmin) && (
+                <Link
+                  href="/cart"
+                  onClick={handleCartClick}
+                  className="relative p-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
+                >
+                  <FaShoppingCart className="h-6 w-6" />
+                  {cartItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 dark:bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full animate-pulse">
+                      {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                    </span>
+                  )}
+                </Link>
+              )}
 
-              <Link
-                href="/cart"
-                onClick={handleCartClick}
-                className="relative p-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
-              >
-                <FaShoppingCart className="h-6 w-6" />
-                {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 dark:bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full animate-pulse">
-                    {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                  </span>
-                )}
-              </Link>
-
-              {isLoggedIn ? (
+              {(isLoggedIn || isAdmin) ? (
                 <div className="relative group">
                   <div className="flex items-center space-x-3 cursor-pointer">
                     <div className="w-9 h-9 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white">
@@ -182,11 +183,21 @@ const Navbar = () => {
                       </span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Welcome back,</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {isAdmin ? 'Admin' : 'Welcome back,'}
+                      </span>
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{userName}</span>
                     </div>
                   </div>
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-700/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-1">
+                    {isAdmin && (
+                      <Link
+                        href="/admin/dashboard"
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                      >
+                        Dashboard
+                      </Link>
+                    )}
                     <Link
                       href="/profile"
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
