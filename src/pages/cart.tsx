@@ -460,6 +460,7 @@ export default function Cart() {
                             src={imageUrl}
                             alt={item.title}
                             fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover rounded-lg shadow-sm"
                           />
                         );
