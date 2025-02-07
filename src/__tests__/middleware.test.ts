@@ -2,12 +2,24 @@ import { NextResponse } from 'next/server'
 import { middleware } from '../middleware'
 
 // Mock next/server
-jest.mock('next/server', () => ({
-  NextResponse: {
-    next: jest.fn().mockReturnValue({ type: 'next', headers: { set: function() {} } }),
-    redirect: jest.fn().mockImplementation((url) => ({ type: 'redirect', destination: new URL(url), headers: { set: function() {} } })),
-  },
-}))
+jest.mock('next/server', () => {
+  const mockHeaders = new Map()
+  const mockHeadersHandler = {
+    set: function(name: string, value: string) {
+      mockHeaders.set(name, value)
+    },
+    get: function(name: string) {
+      return mockHeaders.get(name)
+    },
+  }
+
+  return {
+    NextResponse: {
+      next: jest.fn().mockReturnValue({ type: 'next', headers: mockHeadersHandler }),
+      redirect: jest.fn().mockImplementation((url) => ({ type: 'redirect', destination: new URL(url), headers: mockHeadersHandler })),
+    },
+  }
+})
 
 // Helper function to create mock request
 const createMockRequest = (pathname: string, cookies: { [key: string]: string } = {}) => ({
@@ -29,15 +41,16 @@ describe('Middleware', () => {
   it('should allow access to auth pages when not logged in', () => {
     const mockRequest = createMockRequest('/login')
     const response = middleware(mockRequest as any)
-    expect(response).toEqual({ type: 'next', headers: { set: expect.any(Function) } })
+    expect(response.type).toBe('next')
+    expect(response.headers.set).toBeDefined()
   })
 
   it('should redirect from auth pages when logged in', () => {
     const mockRequest = createMockRequest('/login', { token: 'test-token' })
     const response = middleware(mockRequest as any)
     expect(response.type).toBe('redirect')
-    expect(response.destination.href).toBe('http://localhost:3000/products')
-    expect(typeof response.headers.set).toBe('function')
+    expect(response.destination.pathname).toBe('/products')
+    expect(response.headers.set).toBeDefined()
   })
 
   it('should redirect from protected routes when not logged in', () => {
@@ -48,11 +61,14 @@ describe('Middleware', () => {
     const receiptResponse = middleware(mockReceiptRequest as any)
 
     expect(cartResponse.type).toBe('redirect')
-    expect(cartResponse.destination.href).toBe('http://localhost:3000/login')
-    expect(typeof cartResponse.headers.set).toBe('function')
+    expect(cartResponse.destination.pathname).toBe('/login')
+    expect(cartResponse.headers.set).toBeDefined()
+    expect(cartResponse.headers.get('Cache-Control')).toBe('no-store')
+
     expect(receiptResponse.type).toBe('redirect')
-    expect(receiptResponse.destination.href).toBe('http://localhost:3000/login')
-    expect(typeof receiptResponse.headers.set).toBe('function')
+    expect(receiptResponse.destination.pathname).toBe('/login')
+    expect(receiptResponse.headers.set).toBeDefined()
+    expect(receiptResponse.headers.get('Cache-Control')).toBe('no-store')
   })
 
   it('should allow access to protected routes when logged in', () => {
@@ -62,8 +78,13 @@ describe('Middleware', () => {
     const cartResponse = middleware(mockCartRequest as any)
     const receiptResponse = middleware(mockReceiptRequest as any)
 
-    expect(cartResponse).toEqual({ type: 'next', headers: { set: expect.any(Function) } })
-    expect(receiptResponse).toEqual({ type: 'next', headers: { set: expect.any(Function) } })
+    expect(cartResponse.type).toBe('next')
+    expect(cartResponse.headers.set).toBeDefined()
+    expect(cartResponse.headers.get('Cache-Control')).toBe('no-store')
+
+    expect(receiptResponse.type).toBe('next')
+    expect(receiptResponse.headers.set).toBeDefined()
+    expect(receiptResponse.headers.get('Cache-Control')).toBe('no-store')
   })
 
   it('should allow access to public routes', () => {
@@ -73,8 +94,11 @@ describe('Middleware', () => {
     const homeResponse = middleware(mockHomeRequest as any)
     const productsResponse = middleware(mockProductsRequest as any)
 
-    expect(homeResponse).toEqual({ type: 'next', headers: { set: expect.any(Function) } })
-    expect(productsResponse).toEqual({ type: 'next', headers: { set: expect.any(Function) } })
+    expect(homeResponse.type).toBe('next')
+    expect(homeResponse.headers.set).toBeDefined()
+
+    expect(productsResponse.type).toBe('next')
+    expect(productsResponse.headers.set).toBeDefined()
   })
 
   it('should match configured routes', () => {
@@ -87,18 +111,22 @@ describe('Middleware', () => {
     const mockAdminRequest = createMockRequest('/admin/dashboard')
     const noAuthResponse = middleware(mockAdminRequest as any)
     expect(noAuthResponse.type).toBe('redirect')
-    expect(noAuthResponse.destination.href).toBe('http://localhost:3000/admin/login')
-    expect(typeof noAuthResponse.headers.set).toBe('function')
+    expect(noAuthResponse.destination.pathname).toBe('/admin/login')
+    expect(noAuthResponse.headers.set).toBeDefined()
+    expect(noAuthResponse.headers.get('Cache-Control')).toBe('no-store')
 
     // Allow access with admin token
     const mockAdminAuthRequest = createMockRequest('/admin/dashboard', { adminToken: 'admin-token' })
     const adminAuthResponse = middleware(mockAdminAuthRequest as any)
-    expect(adminAuthResponse).toEqual({ type: 'next', headers: { set: expect.any(Function) } })
+    expect(adminAuthResponse.type).toBe('next')
+    expect(adminAuthResponse.headers.set).toBeDefined()
+    expect(adminAuthResponse.headers.get('Cache-Control')).toBe('no-store')
 
     // Redirect admin login to regular login
     const mockAdminLoginRequest = createMockRequest('/admin/login')
     const adminLoginResponse = middleware(mockAdminLoginRequest as any)
     expect(adminLoginResponse.type).toBe('redirect')
+    expect(adminLoginResponse.destination.pathname).toBe('/login')
     expect(adminLoginResponse.destination.href).toBe('http://localhost:3000/login')
     expect(typeof adminLoginResponse.headers.set).toBe('function')
   })
