@@ -99,20 +99,42 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
         throw new Error('Invalid URL protocol');
       }
       
-      // Check for placeimg.com and replace with imgur fallback
-      if (cleanUrl.includes('placeimg.com')) {
-        console.log('Found placeimg.com URL, using fallback');
-        return 'https://i.imgur.com/QkIa5tT.jpeg';
+      // Check for unreliable image sources and replace with reliable fallbacks
+      const unreliableSources = ['placeimg.com', 'pravatar.cc', 'example.com'];
+      if (unreliableSources.some(source => cleanUrl.includes(source))) {
+        console.log('Found unreliable image source, using fallback');
+        return 'https://picsum.photos/400/300';
       }
 
       // Validate the hostname is in our allowed list
       const allowedHosts = [
         'i.imgur.com',
-        'api.escuelajs.co',
-        'ui-avatars.com',
-        'images.unsplash.com',
-        'api.lorem.space',
-        'encrypted-tbn0.gstatic.com'
+      'api.escuelajs.co',
+      'picsum.photos',
+      'images.unsplash.com',
+      'via.placeholder.com',
+      'fastly.picsum.photos',
+      'loremflickr.com',
+      'cloudflare-ipfs.com',
+      'raw.githubusercontent.com',
+      'avatars.githubusercontent.com',
+      'robohash.org',
+      'carshow.id',
+      'storage.googleapis.com',
+      'storage.cloud.google.com',
+      'api.escuelajs.co',
+      'img.lazcdn.com',
+      'i5.walmartimages.com',
+      'www.thekooples.com',
+      'cdn.shopify.com',
+      'i.pravatar.cc',
+      'pravatar.cc',
+      'sdcdn.io',
+      'gravatar.com',
+      'image1.jpg',
+      'placeimg.com',
+      'api.lorem.space',
+      'bmw.scene7.com',
       ];
       
       const url = new URL(cleanUrl);

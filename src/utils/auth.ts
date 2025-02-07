@@ -36,10 +36,25 @@ export const removeAuthToken = (type: 'user' | 'admin' | 'all' = 'all') => {
   }
 };
 
+// Function to get admin token
+export const getAdminToken = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('adminToken');
+  }
+  return null;
+};
+
 // Function to add auth header to fetch requests
 export const addAuthHeader = (headers: HeadersInit = {}): HeadersInit => {
   const token = getAuthToken();
-  if (token) {
+  const adminToken = getAdminToken();
+  
+  if (adminToken) {
+    return {
+      ...headers,
+      'Authorization': `Bearer ${adminToken}`,
+    };
+  } else if (token) {
     return {
       ...headers,
       'Authorization': `Bearer ${token}`,

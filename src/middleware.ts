@@ -39,8 +39,8 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // If user is accessing protected route without token, redirect to login
-  if (isProtectedRoute && !token) {
+  // If user is accessing protected route without token or admin token, redirect to login
+  if (isProtectedRoute && !token && !adminToken) {
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.headers.set('Cache-Control', 'no-store');
     return response;
