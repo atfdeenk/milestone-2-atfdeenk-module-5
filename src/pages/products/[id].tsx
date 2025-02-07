@@ -266,14 +266,17 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
 
       let currentCart = [];
       const userEmail = localStorage.getItem('userEmail');
-      const isAdmin = localStorage.getItem('adminToken') !== null;
-      const cartKey = isAdmin ? 'cart' : (userEmail ? `cart_${userEmail}` : 'cart');
+      const adminToken = localStorage.getItem('adminToken');
+      
+      // Determine which cart to use
+      const cartKey = adminToken ? 'cart' : (userEmail ? `cart_${userEmail}` : 'cart');
       
       try {
         const savedCart = localStorage.getItem(cartKey);
         currentCart = savedCart ? JSON.parse(savedCart) : [];
       } catch (err) {
         console.error('Error parsing cart:', err);
+        currentCart = [];
       }
 
       const existingItemIndex = currentCart.findIndex((item: any) => item.id === product.id);
@@ -290,9 +293,12 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
         });
       }
 
+      // Save to the appropriate cart
       localStorage.setItem(cartKey, JSON.stringify(currentCart));
-      if (!isAdmin && userEmail) {
-        localStorage.setItem('cart', JSON.stringify(currentCart)); // Sync with general cart only for regular users
+      
+      // For regular users, also update their specific cart
+      if (!adminToken && userEmail) {
+        localStorage.setItem(`cart_${userEmail}`, JSON.stringify(currentCart));
       }
 
       // Dispatch events to notify other components

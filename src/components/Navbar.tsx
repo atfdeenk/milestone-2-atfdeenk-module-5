@@ -66,11 +66,25 @@ const Navbar = () => {
   const updateCartCount = useCallback(() => {
     if (typeof window !== 'undefined') {
       const userEmail = localStorage.getItem('userEmail');
-      const adminEmail = localStorage.getItem('adminEmail');
-      const email = adminEmail || userEmail;
-      const cartKey = email ? `cart_${email}` : 'cart';
-      const cart = JSON.parse(localStorage.getItem(cartKey) || '[]') as CartItem[];
-      setCartItems(cart);
+      const adminToken = localStorage.getItem('adminToken');
+      
+      // For admin, use the general cart
+      if (adminToken) {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]') as CartItem[];
+        setCartItems(cart);
+        return;
+      }
+
+      // For regular users, use their specific cart
+      if (userEmail) {
+        const cartKey = `cart_${userEmail}`;
+        const cart = JSON.parse(localStorage.getItem(cartKey) || '[]') as CartItem[];
+        setCartItems(cart);
+        return;
+      }
+
+      // If no user is logged in, show empty cart
+      setCartItems([]);
     }
   }, []);
 
