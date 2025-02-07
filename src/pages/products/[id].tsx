@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
+import ProductCard from '../../components/ProductCard';
 import { Product } from '../../types';
 import Notification from '../../components/Notification';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -757,6 +758,21 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       {error && (
         <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
           {error}
+        </div>
+      )}
+
+      {/* Related Products */}
+      {relatedProducts && relatedProducts.length > 0 && (
+        <div className="mt-16 border-t dark:border-gray-700 pt-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Related Products</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {relatedProducts.map((relatedProduct) => (
+              <ProductCard
+                key={relatedProduct.id}
+                product={relatedProduct}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
