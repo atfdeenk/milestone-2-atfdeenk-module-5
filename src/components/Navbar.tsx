@@ -22,25 +22,30 @@ const Navbar = () => {
       const adminToken = localStorage.getItem('adminToken');
       const storedUserName = localStorage.getItem('userName');
       const storedEmail = localStorage.getItem('userEmail');
+      const storedAdminEmail = localStorage.getItem('adminEmail');
       
-      setIsLoggedIn(!!token);
+      setIsLoggedIn(!!token || !!adminToken);
       setIsAdmin(!!adminToken);
       if (storedUserName) {
         setUserName(storedUserName);
       }
 
-      if (token && !storedUserName) {
+      if ((token || adminToken) && !storedUserName) {
         try {
           const response = await fetch('https://api.escuelajs.co/api/v1/auth/profile', {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${token || adminToken}`,
             },
           });
           
           if (response.ok) {
             const userData = await response.json();
             localStorage.setItem('userName', userData.name);
-            localStorage.setItem('userEmail', userData.email);
+            if (adminToken) {
+              localStorage.setItem('adminEmail', userData.email);
+            } else {
+              localStorage.setItem('userEmail', userData.email);
+            }
             setUserName(userData.name);
             
             // Load user's cart data
@@ -61,7 +66,9 @@ const Navbar = () => {
   const updateCartCount = useCallback(() => {
     if (typeof window !== 'undefined') {
       const userEmail = localStorage.getItem('userEmail');
-      const cartKey = userEmail ? `cart_${userEmail}` : 'cart';
+      const adminEmail = localStorage.getItem('adminEmail');
+      const email = adminEmail || userEmail;
+      const cartKey = email ? `cart_${email}` : 'cart';
       const cart = JSON.parse(localStorage.getItem(cartKey) || '[]') as CartItem[];
       setCartItems(cart);
     }

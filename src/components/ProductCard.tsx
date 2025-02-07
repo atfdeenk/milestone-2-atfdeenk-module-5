@@ -40,15 +40,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onFavoriteToggle }) 
   const fallbackImage = 'https://i.imgur.com/QkIa5tT.jpeg';
   let imageUrl = fallbackImage;
   
+  const extractUrl = (urlString: string): string => {
+    try {
+      // Remove escaped quotes and parse
+      const cleaned = urlString.replace(/\\"|"/g, '');
+      return cleaned.startsWith('http') ? cleaned : fallbackImage;
+    } catch {
+      return fallbackImage;
+    }
+  };
+
   if (!imageError && product.images && product.images.length > 0) {
     try {
-      // Handle double-stringified URLs from the API
       const firstImage = product.images[0];
       if (typeof firstImage === 'string') {
-        // Parse the stringified array
-        const parsedUrls = JSON.parse(firstImage);
-        if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
-          imageUrl = parsedUrls[0];
+        if (firstImage.startsWith('[')) {
+          // Handle array format: ["https://example.com/image.jpg"]
+          const urlMatch = firstImage.match(/\["(.+?)"\]/); 
+          if (urlMatch && urlMatch[1]) {
+            imageUrl = extractUrl(urlMatch[1]);
+          }
+        } else if (firstImage.startsWith('http')) {
+          // Direct URL
+          imageUrl = firstImage;
         }
       }
     } catch (error) {
