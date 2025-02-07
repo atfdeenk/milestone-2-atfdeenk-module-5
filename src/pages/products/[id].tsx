@@ -83,20 +83,32 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   const parseImageUrl = (rawUrl: string): string => {
     console.log('Parsing image URL:', rawUrl);
     try {
-      // Try to parse as JSON first
-      let parsed = rawUrl;
-      while (typeof parsed === 'string' && (parsed.startsWith('[') || parsed.startsWith('"'))) {
-        console.log('Attempting to parse:', parsed);
-        parsed = JSON.parse(parsed);
+      // Handle empty or invalid input
+      if (!rawUrl || typeof rawUrl !== 'string') {
+        throw new Error('Invalid image URL');
       }
-      
-      // If we got an array, take the first item
-      if (Array.isArray(parsed)) {
-        parsed = parsed[0];
+
+      let finalUrl = rawUrl;
+
+      // Try to parse if it looks like JSON
+      if (rawUrl.trim().startsWith('[') || rawUrl.trim().startsWith('{') || rawUrl.trim().startsWith('"')) {
+        try {
+          const parsed = JSON.parse(rawUrl);
+          if (Array.isArray(parsed)) {
+            finalUrl = parsed[0];
+          } else if (typeof parsed === 'string') {
+            finalUrl = parsed;
+          } else {
+            throw new Error('Invalid JSON format');
+          }
+        } catch (jsonError) {
+          // If JSON parsing fails, try to use the raw URL after cleaning
+          finalUrl = rawUrl.replace(/[\[\]"]/g, '').trim();
+        }
       }
-      
+
       // Clean up the URL
-      const cleanUrl = String(parsed).replace(/[\[\]"]/g, '').trim();
+      const cleanUrl = finalUrl.replace(/[\[\]"]/g, '').trim();
       console.log('Cleaned URL:', cleanUrl);
       
       // Validate URL
@@ -165,21 +177,33 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
   useEffect(() => {
     if (initialProduct?.images) {
       try {
-        let imageUrl: string;
-        if (Array.isArray(initialProduct.images) && initialProduct.images.length > 0) {
-          console.log('Initial product images:', initialProduct.images);
-          imageUrl = parseImageUrl(initialProduct.images[0]);
+        let processedImages: string[] = [];
+        if (Array.isArray(initialProduct.images)) {
+          processedImages = initialProduct.images.map(img => parseImageUrl(img));
         } else if (typeof initialProduct.images === 'string') {
-          console.log('Initial product images string:', initialProduct.images);
-          imageUrl = parseImageUrl(initialProduct.images);
-        } else {
-          throw new Error('Invalid image format');
+          // Handle case where images is a JSON string of array
+          try {
+            const parsedImages = JSON.parse(initialProduct.images);
+            if (Array.isArray(parsedImages)) {
+              processedImages = parsedImages.map(img => parseImageUrl(img));
+            } else {
+              processedImages = [parseImageUrl(initialProduct.images)];
+            }
+          } catch {
+            processedImages = [parseImageUrl(initialProduct.images)];
+          }
         }
-        
-        setSelectedImage(imageUrl);
+
+        if (processedImages.length > 0) {
+          setSelectedImage(processedImages[0]);
+          // Update product with processed images
+          setProduct(prev => prev ? { ...prev, images: processedImages } : null);
+        } else {
+          throw new Error('No valid images found');
+        }
         setImageError(false);
       } catch (err) {
-        console.error('Error processing initial product image:', err);
+        console.error('Error processing initial product images:', err);
         setSelectedImage('https://i.imgur.com/QkIa5tT.jpeg');
         setImageError(false);
       }
@@ -495,22 +519,29 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
                 )}
               </div>
             </div>
-            {product.images.length > 1 && (
+            {Array.isArray(product.images) && product.images.length > 1 && (
               <div className="mt-4 grid grid-cols-4 gap-4">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() => {
+                      const parsedImage = parseImageUrl(image);
+                      setSelectedImage(parsedImage);
+                      setImageError(false);
+                    }}
                     className={`relative aspect-square w-full rounded-lg border-2 ${
-                      selectedImage === image ? 'border-blue-500' : 'border-transparent'
-                    }`}
+                      selectedImage === parseImageUrl(image) ? 'border-blue-500' : 'border-transparent'
+                    } overflow-hidden hover:opacity-80 transition-opacity duration-200`}
                   >
                     <Image
-                      src={image}
+                      src={parseImageUrl(image)}
                       alt={`${product.title} - Image ${index + 1}`}
                       fill
                       sizes="(max-width: 768px) 25vw, 200px"
                       className="object-cover rounded-lg"
+                      onError={() => {
+                        console.error('Thumbnail failed to load:', image);
+                      }}
                     />
                   </button>
                 ))}
