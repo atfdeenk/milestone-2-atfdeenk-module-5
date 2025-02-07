@@ -137,6 +137,8 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       'placeimg.com',
       'api.lorem.space',
       'bmw.scene7.com',
+      'images.tokopedia.net',
+      'lavanilla.id',
       ];
       
       const url = new URL(cleanUrl);

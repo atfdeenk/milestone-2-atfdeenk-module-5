@@ -149,14 +149,14 @@ const Navbar = () => {
                 )}
               </button>
               {/* Admin Dashboard Link */}
-              {isAdmin && (
+              {/* {isAdmin && (
                 <Link
                   href="/admin/dashboard"
                   className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
                 >
                   Admin
                 </Link>
-              )}
+              )} */}
 
               {/* Cart and Profile buttons */}
               {(isLoggedIn || isAdmin) && (
@@ -191,29 +191,28 @@ const Navbar = () => {
                   </div>
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-700/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-1">
                     {isAdmin && (
-                      <Link
-                        href="/admin/dashboard"
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                      >
-                        Dashboard
-                      </Link>
-                    )}
-                    {!isAdmin && (
                       <>
                         <Link
-                          href="/profile?tab=orders"
+                          href="/admin/dashboard"
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                         >
-                          Order History
+                          Dashboard
                         </Link>
-                        <Link
-                          href="/profile?tab=favorites"
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                        >
-                          Favorites
-                        </Link>
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                       </>
                     )}
+                    <Link
+                      href="/profile?tab=orders"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      Order History
+                    </Link>
+                    <Link
+                      href="/profile?tab=favorites"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      Favorites
+                    </Link>
                     <Link
                       href="/profile?tab=account"
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"

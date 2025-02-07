@@ -60,7 +60,10 @@ export default function Profile() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    const adminToken = localStorage.getItem('adminToken');
+    
+    // Check if either user or admin is logged in
+    if (!token && !adminToken) {
       router.push('/login');
       return;
     }
@@ -69,14 +72,50 @@ export default function Profile() {
     if (email) {
       setUserEmail(email);
       loadUserData(email);
+    } else if (adminToken) {
+      // If admin is logged in but no email is set, try to get admin profile
+      fetchAdminProfile(adminToken);
     }
 
-    const isDark = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(isDark);
-
-    const notifications = localStorage.getItem('emailNotifications') !== 'false';
-    setEmailNotifications(notifications);
+    // Load user-specific settings
+    if (email) {
+      const userSettingsKey = `userSettings_${email}`;
+      const savedSettings = localStorage.getItem(userSettingsKey);
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        setDarkMode(settings.darkMode ?? false);
+        setEmailNotifications(settings.emailNotifications ?? true);
+      } else {
+        // Default settings for new users
+        const defaultSettings = {
+          darkMode: false,
+          emailNotifications: true
+        };
+        localStorage.setItem(userSettingsKey, JSON.stringify(defaultSettings));
+        setDarkMode(false);
+        setEmailNotifications(true);
+      }
+    }
   }, [router]);
+
+  const fetchAdminProfile = async (adminToken: string) => {
+    try {
+      const response = await fetch('https://api.escuelajs.co/api/v1/auth/profile', {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+        },
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUserEmail(userData.email);
+        localStorage.setItem('userEmail', userData.email);
+        loadUserData(userData.email);
+      }
+    } catch (error) {
+      console.error('Failed to fetch admin profile:', error);
+    }
+  };
 
   const loadUserData = (email: string) => {
     // Load order history from receipts
@@ -111,14 +150,99 @@ export default function Profile() {
   const handleDarkModeToggle = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', String(newDarkMode));
+
+    // Save user-specific settings
+    if (userEmail) {
+      const userSettingsKey = `userSettings_${userEmail}`;
+      const currentSettings = localStorage.getItem(userSettingsKey);
+      const settings = currentSettings ? JSON.parse(currentSettings) : {};
+      settings.darkMode = newDarkMode;
+      localStorage.setItem(userSettingsKey, JSON.stringify(settings));
+    }
+
+    // Update document class for dark mode
     document.documentElement.classList.toggle('dark');
   };
 
   const handleEmailNotificationsToggle = () => {
     const newEmailNotifications = !emailNotifications;
     setEmailNotifications(newEmailNotifications);
-    localStorage.setItem('emailNotifications', String(newEmailNotifications));
+
+    // Save user-specific settings
+    const userSettingsKey = `userSettings_${userEmail}`;
+    const currentSettings = localStorage.getItem(userSettingsKey);
+    const settings = currentSettings ? JSON.parse(currentSettings) : {};
+    settings.emailNotifications = newEmailNotifications;
+    localStorage.setItem(userSettingsKey, JSON.stringify(settings));
+  };
+
+  const handlePrintReceipt = (order: OrderHistoryItem) => {
+    // Create a new window for the receipt
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Generate receipt HTML
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Receipt - Order #${order.orderNumber}</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .order-info { margin-bottom: 20px; }
+          .items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .items th, .items td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+          .total { text-align: right; font-weight: bold; }
+          @media print {
+            body { padding: 0; }
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>ShopSmart</h1>
+          <p>Order Receipt</p>
+        </div>
+        <div class="order-info">
+          <p><strong>Order #:</strong> ${order.orderNumber}</p>
+          <p><strong>Date:</strong> ${order.orderDate}</p>
+          <p><strong>Customer:</strong> ${userEmail}</p>
+        </div>
+        <table class="items">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items.map(item => `
+              <tr>
+                <td>${item.title}</td>
+                <td>${item.quantity}</td>
+                <td>$${item.price.toFixed(2)}</td>
+                <td>$${(item.price * item.quantity).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="total">
+          <p>Total: $${order.totalPrice.toFixed(2)}</p>
+        </div>
+        <button onclick="window.print()" style="padding: 10px 20px; background: #3B82F6; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px;">
+          Print Receipt
+        </button>
+      </body>
+      </html>
+    `;
+
+    // Write the receipt HTML to the new window
+    printWindow.document.write(receiptHTML);
+    printWindow.document.close();
   };
 
   const handleRemoveFavorite = (productId: number) => {
@@ -252,9 +376,20 @@ export default function Profile() {
                             {order.orderDate}
                           </p>
                         </div>
-                        <span className="text-lg font-medium text-gray-900 dark:text-white">
-                          ${order.totalPrice.toFixed(2)}
-                        </span>
+                        <div className="flex items-center space-x-4">
+                          <span className="text-lg font-medium text-gray-900 dark:text-white">
+                            ${order.totalPrice.toFixed(2)}
+                          </span>
+                          <button
+                            onClick={() => handlePrintReceipt(order)}
+                            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            <span>Print</span>
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         {order.items.map((item) => (
@@ -282,9 +417,10 @@ export default function Profile() {
                   </p>
                 ) : (
                   favorites.map((product) => (
-                    <div
+                    <Link
                       key={product.id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      href={`/products/${product.id}`}
+                      className="block border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-shadow duration-200"
                     >
                       <div className="relative w-full h-48 mb-4">
                         {(() => {
@@ -323,14 +459,20 @@ export default function Profile() {
                         </span>
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleAddToCart(product)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleAddToCart(product);
+                            }}
                             className="text-blue-500 hover:text-blue-600 transition-colors duration-200"
                             title="Add to Cart"
                           >
                             <FaShoppingCart className="h-5 w-5" />
                           </button>
                           <button
-                            onClick={() => handleRemoveFavorite(product.id)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleRemoveFavorite(product.id);
+                            }}
                             className="text-red-500 hover:text-red-600 transition-colors duration-200"
                             title="Remove from Favorites"
                           >
@@ -338,7 +480,7 @@ export default function Profile() {
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))
                 )}
               </div>

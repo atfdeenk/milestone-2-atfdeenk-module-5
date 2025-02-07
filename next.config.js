@@ -30,6 +30,8 @@ const nextConfig = {
       'placeimg.com',
       'api.lorem.space',
       'bmw.scene7.com',
+      'images.tokopedia.net',
+      'lavanilla.id',
     ],
   },
 }
