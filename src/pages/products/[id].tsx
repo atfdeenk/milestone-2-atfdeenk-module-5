@@ -770,6 +770,32 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
               <ProductCard
                 key={relatedProduct.id}
                 product={relatedProduct}
+                onFavoriteToggle={(product) => {
+                  if (!userEmail) return;
+                  const isFavorite = favorites.some(fav => fav.id === product.id);
+                  let updatedFavorites;
+
+                  if (isFavorite) {
+                    updatedFavorites = favorites.filter(fav => fav.id !== product.id);
+                    setNotificationMessage('Removed from favorites');
+                  } else {
+                    const processedProduct = {
+                      ...product,
+                      images: Array.isArray(product.images)
+                        ? product.images.map(img => parseImageUrl(img))
+                        : product.images
+                          ? [parseImageUrl(product.images[0])]
+                          : [parseImageUrl('')]
+                    };
+                    updatedFavorites = [...favorites, processedProduct];
+                    setNotificationMessage('Added to favorites');
+                  }
+
+                  setFavorites(updatedFavorites);
+                  localStorage.setItem(`favorites_${userEmail}`, JSON.stringify(updatedFavorites));
+                  setNotificationType('success');
+                  setShowNotification(true);
+                }}
               />
             ))}
           </div>
