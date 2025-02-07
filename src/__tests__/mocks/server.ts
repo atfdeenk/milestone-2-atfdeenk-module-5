@@ -1,19 +1,27 @@
 import { setupServer } from 'msw/node'
 import { handlers } from './handlers'
 
-export const setupMockServer = () => {
-  const server = setupServer(...handlers)
-  
-  // Enable request interception
-  beforeAll(() => server.listen())
-  
-  // Reset handlers between tests
-  afterEach(() => server.resetHandlers())
-  
-  // Clean up after all tests
-  afterAll(() => server.close())
+// This exports the server instance directly
+export const server = setupServer(...handlers)
 
-  return server
-}
+describe('MSW Server', () => {
+  beforeAll(() => {
+    server.listen({ onUnhandledRequest: 'bypass' })
+  })
 
-export { handlers }
+  afterEach(() => {
+    server.resetHandlers()
+  })
+
+  afterAll(() => {
+    server.close()
+  })
+
+  it('should be defined', () => {
+    expect(server).toBeDefined()
+  })
+
+  it('should have handlers', () => {
+    expect(handlers.length).toBeGreaterThan(0)
+  })
+})

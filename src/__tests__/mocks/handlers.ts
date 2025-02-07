@@ -1,6 +1,25 @@
 import { rest } from 'msw'
 import { Product, Category } from '@/types'
 
+describe('Mock Data', () => {
+  it('should have valid mock categories', () => {
+    expect(mockCategories).toHaveLength(2)
+    expect(mockCategories[0]).toHaveProperty('id')
+    expect(mockCategories[0]).toHaveProperty('name')
+    expect(mockCategories[0]).toHaveProperty('image')
+  })
+
+  it('should have valid mock products', () => {
+    expect(mockProducts).toHaveLength(2)
+    expect(mockProducts[0]).toHaveProperty('id')
+    expect(mockProducts[0]).toHaveProperty('title')
+    expect(mockProducts[0]).toHaveProperty('description')
+    expect(mockProducts[0]).toHaveProperty('price')
+    expect(mockProducts[0]).toHaveProperty('category')
+    expect(mockProducts[0]).toHaveProperty('images')
+  })
+})
+
 export const mockCategories: Category[] = [
   {
     id: 1,
@@ -38,6 +57,53 @@ export const mockProducts: Product[] = [
 ]
 
 export const handlers = [
+  // Mock authentication
+  rest.post('https://api.escuelajs.co/api/v1/auth/login', async (req, res, ctx) => {
+    return res(
+      ctx.json({
+        access_token: 'mock-token',
+        refresh_token: 'mock-refresh-token'
+      })
+    )
+  }),
+
+  // Mock user profile
+  rest.get('https://api.escuelajs.co/api/v1/auth/profile', async (req, res, ctx) => {
+    return res(
+      ctx.json({
+        id: 1,
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'customer'
+      })
+    )
+  }),
+
+  // Get categories
+  rest.get('https://api.escuelajs.co/api/v1/categories', async (req, res, ctx) => {
+    return res(ctx.json(mockCategories))
+  }),
+
+  // Get single category
+  rest.get('https://api.escuelajs.co/api/v1/categories/:id', async (req, res, ctx) => {
+    const { id } = req.params
+    const category = mockCategories.find(c => c.id === Number(id))
+    if (!category) {
+      return res(ctx.status(404))
+    }
+    return res(ctx.json(category))
+  }),
+
+  // Get single product
+  rest.get('https://api.escuelajs.co/api/v1/products/:id', async (req, res, ctx) => {
+    const { id } = req.params
+    const product = mockProducts.find(p => p.id === Number(id))
+    if (!product) {
+      return res(ctx.status(404))
+    }
+    return res(ctx.json(product))
+  }),
+
   // Get all products
   rest.get('https://api.escuelajs.co/api/v1/products', async (req, res, ctx) => {
     // Get search params

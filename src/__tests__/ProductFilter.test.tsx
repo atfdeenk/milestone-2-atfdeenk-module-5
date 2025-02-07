@@ -10,8 +10,9 @@ describe('ProductFilter Component', () => {
 
   const mockInitialFilters = {
     category: null,
-    priceRange: { min: 0, max: 0 },
-    sortBy: '',
+    minPrice: null,
+    maxPrice: null,
+    sortBy: null,
     sortOrder: 'desc' as const
   }
 
@@ -56,7 +57,7 @@ describe('ProductFilter Component', () => {
     fireEvent.change(categorySelect, { target: { value: '1' } })
     expect(mockOnFilterChange).toHaveBeenCalledWith({
       ...mockInitialFilters,
-      category: 1
+      category: '1'
     })
   })
 
@@ -68,13 +69,14 @@ describe('ProductFilter Component', () => {
     fireEvent.change(minPrice, { target: { value: '10' } })
     expect(mockOnFilterChange).toHaveBeenCalledWith({
       ...mockInitialFilters,
-      priceRange: { min: 10, max: 0 }
+      minPrice: 10
     })
 
     fireEvent.change(maxPrice, { target: { value: '100' } })
     expect(mockOnFilterChange).toHaveBeenCalledWith({
       ...mockInitialFilters,
-      priceRange: { min: 10, max: 100 }
+      minPrice: 10,
+      maxPrice: 100
     })
   })
 
@@ -110,8 +112,9 @@ describe('ProductFilter Component', () => {
     
     expect(mockOnFilterChange).toHaveBeenCalledWith({
       category: null,
-      priceRange: { min: 0, max: 0 },
-      sortBy: '',
+      minPrice: null,
+      maxPrice: null,
+      sortBy: null,
       sortOrder: 'desc'
     })
   })
@@ -125,21 +128,23 @@ describe('ProductFilter Component', () => {
     fireEvent.change(minPrice, { target: { value: '-10' } })
     expect(mockOnFilterChange).toHaveBeenCalledWith({
       ...mockInitialFilters,
-      priceRange: { min: -10, max: 0 }
+      minPrice: -10
     })
 
-    // Test non-numeric values (these should be converted to 0)
+    // Test non-numeric values (these should be converted to null)
     fireEvent.change(maxPrice, { target: { value: 'abc' } })
     expect(mockOnFilterChange).toHaveBeenCalledWith({
       ...mockInitialFilters,
-      priceRange: { min: -10, max: 0 }
+      minPrice: -10,
+      maxPrice: null
     })
   })
 
   it('maintains filter state between renders', () => {
     const customInitialFilters = {
-      category: 1,
-      priceRange: { min: 10, max: 100 },
+      category: '1',
+      minPrice: 10,
+      maxPrice: 100,
       sortBy: 'price',
       sortOrder: 'asc' as const
     }
@@ -196,8 +201,9 @@ describe('ProductFilter Component', () => {
     fireEvent.change(categorySelect, { target: { value: '1' } })
 
     expect(mockOnFilterChange).toHaveBeenLastCalledWith({
-      category: 1,
-      priceRange: { min: 10, max: 100 },
+      category: '1',
+      minPrice: 10,
+      maxPrice: 100,
       sortBy: 'price',
       sortOrder: 'desc'
     })

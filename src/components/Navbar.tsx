@@ -188,12 +188,13 @@ const Navbar = () => {
                 <Link
                   href="/cart"
                   onClick={handleCartClick}
+                  data-testid="cart-link"
                   className="relative p-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
                 >
                   <FaShoppingCart className="h-6 w-6" />
                   {cartItems.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 dark:bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full animate-pulse">
-                      {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                      <span data-testid="cart-count">{cartItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
                     </span>
                   )}
                 </Link>
@@ -246,6 +247,7 @@ const Navbar = () => {
                     </Link>
                     <button
                       onClick={handleLogout}
+                      data-testid="sign-out-button"
                       className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                     >
                       Logout
