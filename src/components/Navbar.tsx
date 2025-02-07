@@ -68,11 +68,15 @@ const Navbar = () => {
       const userEmail = localStorage.getItem('userEmail');
       const adminToken = localStorage.getItem('adminToken');
       
-      // For admin, use the general cart
+      // For admin, use admin-specific cart
       if (adminToken) {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]') as CartItem[];
-        setCartItems(cart);
-        return;
+        const adminEmail = localStorage.getItem('userEmail');
+        if (adminEmail) {
+          const cartKey = `cart_admin_${adminEmail}`;
+          const cart = JSON.parse(localStorage.getItem(cartKey) || '[]') as CartItem[];
+          setCartItems(cart);
+          return;
+        }
       }
 
       // For regular users, use their specific cart

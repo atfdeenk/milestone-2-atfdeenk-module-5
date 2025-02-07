@@ -255,7 +255,10 @@ export default function Profile() {
     const userEmail = localStorage.getItem('userEmail');
     if (!userEmail) return;
 
-    const cartKey = `cart_${userEmail}`;
+    const isAdmin = localStorage.getItem('adminToken') !== null;
+    const cartKey = isAdmin ? 
+      `cart_admin_${userEmail}` : // Admin-specific cart
+      `cart_${userEmail}`; // Regular user cart
     let cart = [];
     const savedCart = localStorage.getItem(cartKey);
     if (savedCart) {

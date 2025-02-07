@@ -31,17 +31,21 @@ export default function Cart() {
       try {
         if (typeof window === 'undefined') return;
         
-        // First try user-specific cart
+        // Get user-specific cart key based on role and email
         const userEmail = localStorage.getItem('userEmail');
         const isAdmin = localStorage.getItem('adminToken') !== null;
         let cartData = null;
         
-        if (userEmail && !isAdmin) {
-          cartData = localStorage.getItem(`cart_${userEmail}`);
-        }
+        // Generate cart key based on user type
+        const cartKey = isAdmin ? 
+          `cart_admin_${userEmail}` : // Admin-specific cart
+          `cart_${userEmail}`; // Regular user cart
         
-        // For admin users or as fallback, use the general cart
-        if (!cartData || isAdmin) {
+        // Load cart data using the appropriate key
+        cartData = localStorage.getItem(cartKey);
+        
+        // Fallback to general cart if no user-specific cart exists
+        if (!cartData) {
           cartData = localStorage.getItem('cart');
         }
 
@@ -122,11 +126,15 @@ export default function Cart() {
       const userEmail = localStorage.getItem('userEmail');
       const isAdmin = localStorage.getItem('adminToken') !== null;
 
-      // For admin users, always use the general cart
-      if (userEmail && !isAdmin) {
-        localStorage.setItem(`cart_${userEmail}`, JSON.stringify(cartWithSelection));
-      }
-      // Always update the general cart for admins or as backup
+      // Generate cart key based on user type
+      const cartKey = isAdmin ? 
+        `cart_admin_${userEmail}` : // Admin-specific cart
+        `cart_${userEmail}`; // Regular user cart
+
+      // Save cart using the appropriate key
+      localStorage.setItem(cartKey, JSON.stringify(cartWithSelection));
+      
+      // Also save to general cart as backup
       localStorage.setItem('cart', JSON.stringify(cartWithSelection));
       
       // Notify other components

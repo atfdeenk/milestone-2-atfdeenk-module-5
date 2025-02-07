@@ -268,9 +268,11 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
       const userEmail = localStorage.getItem('userEmail');
       const adminToken = localStorage.getItem('adminToken');
       
-      // Determine which cart to use
-      const cartKey = adminToken ? 'cart' : (userEmail ? `cart_${userEmail}` : 'cart');
-      
+      // Generate cart key based on user type
+      const cartKey = adminToken ? 
+        `cart_admin_${userEmail}` : // Admin-specific cart
+        `cart_${userEmail}`; // Regular user cart
+
       try {
         const savedCart = localStorage.getItem(cartKey);
         currentCart = savedCart ? JSON.parse(savedCart) : [];
@@ -293,13 +295,11 @@ const ProductDetail: NextPage<ProductDetailProps> = ({ initialProduct, relatedPr
         });
       }
 
-      // Save to the appropriate cart
+      // Save cart using the appropriate key
       localStorage.setItem(cartKey, JSON.stringify(currentCart));
       
-      // For regular users, also update their specific cart
-      if (!adminToken && userEmail) {
-        localStorage.setItem(`cart_${userEmail}`, JSON.stringify(currentCart));
-      }
+      // Also save to general cart as backup
+      localStorage.setItem('cart', JSON.stringify(currentCart));
 
       // Dispatch events to notify other components
       window.dispatchEvent(new Event('storage'));
