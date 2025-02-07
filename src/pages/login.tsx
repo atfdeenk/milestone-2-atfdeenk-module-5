@@ -133,7 +133,7 @@ const Login: NextPage = () => {
         document.cookie = `token=${data.access_token}; path=/; max-age=86400; samesite=strict`;
       }
 
-      // Fetch user profile
+      // Fetch user profile and verify role
       const profileResponse = await fetch('https://api.escuelajs.co/api/v1/auth/profile', {
         headers: {
           'Authorization': `Bearer ${data.access_token}`,
@@ -142,6 +142,20 @@ const Login: NextPage = () => {
 
       if (profileResponse.ok) {
         const userData = await profileResponse.json();
+        
+        // Verify role matches login type
+        if (loginType === 'admin' && userData.role !== 'admin') {
+          removeAuthToken('all');
+          setError('Access denied. Please use the regular login if you are a customer.');
+          setIsLoading(false);
+          return;
+        } else if (loginType === 'user' && userData.role === 'admin') {
+          removeAuthToken('all');
+          setError('Access denied. Please use the admin login if you are an administrator.');
+          setIsLoading(false);
+          return;
+        }
+
         localStorage.setItem('userName', userData.name);
         localStorage.setItem('userEmail', userData.email);
         

@@ -29,11 +29,39 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('adminToken', data.access_token);
-        localStorage.setItem('userEmail', email);
-        router.push('/profile');
+        const data = await response.json();
+        
+        try {
+          // Verify role after successful login
+          const verifyResponse = await fetch('https://api.escuelajs.co/api/v1/auth/profile', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${data.access_token}`,
+            },
+          });
+
+          if (!verifyResponse.ok) {
+            throw new Error('Failed to verify user role');
+          }
+
+          const userData = await verifyResponse.json();
+          
+          // Check if user has admin role
+          if (userData.role !== 'admin') {
+            setError('Access denied. Please use the regular login page if you are a customer.');
+            return;
+          }
+
+          // If role is correct, proceed with login
+          localStorage.setItem('adminToken', data.access_token);
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userName', userData.name);
+          router.push('/profile');
+        } catch (err) {
+          setError('Failed to verify user role. Please try again.');
+        }
       } else {
-        setError(data.message || 'Invalid credentials');
+        setError('Invalid credentials');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
