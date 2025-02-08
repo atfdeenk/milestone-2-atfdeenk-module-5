@@ -284,6 +284,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Author: atfdeenk
 - GitHub: [https://github.com/atfdeenk](https://github.com/atfdeenk)
-- Email: [your-email@example.com](mailto:your-email@example.com)
+- Email: [atfdeenk@gmail.com](mailto:atfdeenk@gmail.com)
 
 For any questions or feedback, please feel free to reach out!
